@@ -4,3 +4,5 @@ Thumbs.db
 .vercel
 node_modules/
 shots/
+
+.vercel
