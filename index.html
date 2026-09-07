@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LODHANG — an archive of eleven collage-paintings</title>
+<meta name="description" content="A private study archive of eleven collage-paintings by jaka lodhang. Each work is the only light in the room.">
+<meta name="theme-color" content="#08080A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2308080A'/%3E%3Crect x='5' y='3' width='6' height='10' fill='%23C6C123'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- The wall. Everything else sits in front of it. -->
+<canvas id="wall" aria-hidden="true"></canvas>
+<div id="grain" aria-hidden="true"></div>
+<!-- One dead-straight plumb rule through every view. The thing that makes
+     eleven aspect ratios read as one hang. -->
+<div id="plumb" aria-hidden="true"></div>
+
+<a class="sr-only" href="#main">Skip to the works</a>
+
+<header id="chrome">
+  <div class="chrome-l">
+    <button id="brand" type="button" aria-label="Return to the hall">
+      <span class="brand-name">LODHANG</span>
+      <span class="brand-sub mono">ELEVEN PLATES</span>
+    </button>
+  </div>
+
+  <nav class="chrome-c" aria-label="Views">
+    <button class="viewbtn is-on" data-view="hall" type="button">Hall</button>
+    <button class="viewbtn" data-view="ledger" type="button">Index</button>
+  </nav>
+
+  <div class="chrome-r">
+    <span id="order-label" class="micro">ORDER</span>
+    <div id="orders" role="group" aria-labelledby="order-label"></div>
+    <button id="importbtn" class="mono" type="button">Import</button>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HALL -->
+  <section id="hall" class="view is-on" aria-label="The hall">
+    <div id="stations"></div>
+  </section>
+
+  <!-- LEDGER -->
+  <section id="ledger" class="view" aria-label="The index" hidden></section>
+
+  <!-- STUDY -->
+  <section id="study" class="view" aria-label="Study" hidden></section>
+</main>
+
+<!-- The hue rule: one tick per work, with the arcs the artist never went near
+     left visibly empty. -->
+<aside id="huerule" aria-label="Works by hue"></aside>
+
+<!-- Held-key overlay: every plate at true relative scale. -->
+<div id="collation" hidden aria-hidden="true"></div>
+
+<!-- Drag-and-drop ingest, so the archive can be filled with no tooling. -->
+<div id="import" hidden></div>
+
+<div id="status" class="mono" role="status" aria-live="polite"></div>
+
+<footer id="colophon">
+  <p class="colophon-line">
+    <span id="attrib"></span>
+  </p>
+  <p class="colophon-line micro" id="keys">
+    <span><kbd>J</kbd><kbd>K</kbd> MOVE</span>
+    <span><kbd>ENTER</kbd> STUDY</span>
+    <span><kbd>C</kbd> HOLD TO COLLATE</span>
+    <span><kbd>I</kbd> INDEX</span>
+    <span><kbd>ESC</kbd> BACK</span>
+  </p>
+</footer>
+
+<noscript>
+  <style>#chrome,#huerule,#colophon{display:none}</style>
+  <div class="noscript">
+    <h1>LODHANG</h1>
+    <p>This archive needs JavaScript to light the room. The eleven works and their
+       catalogue entries are in <code>data/catalog.json</code>.</p>
+  </div>
+</noscript>
+
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

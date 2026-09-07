@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LQIP builder — browser fallback</title>
+<!--
+  Browser-side twin of tools/build-manifest.mjs, for anyone who cannot run Node
+  (and for the formats the pure-Node path will not decode: WebP, AVIF, HEIF).
+
+  Deliberately ONE self-contained file with no imports, so it works when opened
+  straight off the disk with file:// — ES-module imports and Workers are both
+  blocked at that origin, and the person who needs this tool is by definition
+  the person who cannot start a server either.
+
+  It produces the SAME manifest shape and the SAME indexed-PNG placeholders as
+  the Node build: CompressionStream('deflate') emits RFC1950 zlib, which is
+  exactly what a PNG IDAT chunk wants.
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #08080a; --panel: #101014; --line: #23232b;
+    --ink: #e8e6e3; --dim: #8a8a94; --accent: #d8b46a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 32px clamp(16px, 5vw, 56px) 96px;
+  }
+  h1 { font-size: 19px; font-weight: 600; letter-spacing: .01em; margin: 0 0 6px; }
+  p.sub { color: var(--dim); margin: 0 0 28px; max-width: 68ch; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
+
+  #drop {
+    border: 1px dashed var(--line); border-radius: 10px; padding: 40px 24px;
+    text-align: center; background: var(--panel); transition: border-color .15s, background .15s;
+  }
+  #drop.over { border-color: var(--accent); background: #16140f; }
+  #drop p { margin: 0 0 14px; color: var(--dim); }
+  button, label.btn {
+    font: inherit; color: var(--ink); background: #1b1b21; border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 15px; cursor: pointer;
+  }
+  button:hover, label.btn:hover { border-color: #3a3a46; }
+  button:focus-visible, label.btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[disabled] { opacity: .45; cursor: default; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 24px 0 16px; }
+  .bar label.opt { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+  .bar input[type=number] { width: 68px; font: inherit; background: #1b1b21; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--dim); font-weight: 500; position: sticky; top: 0; background: var(--bg); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .swatch { width: 46px; height: 30px; border-radius: 4px; display: block; image-rendering: auto; }
+  .chip { width: 14px; height: 14px; border-radius: 3px; display: inline-block; vertical-align: -2px; }
+  .warn { color: #e0a33a; }
+  .err { color: #e06a5a; }
+  #out { width: 100%; height: 220px; margin-top: 18px; background: var(--panel); color: var(--dim);
+    border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; resize: vertical; }
+  .status { color: var(--dim); margin: 12px 0 0; min-height: 1.5em; }
+</style>
+</head>
+<body>
+
+<h1>LQIP builder</h1>
+<p class="sub">
+  Drop the image folder here. Produces the same <code>manifest.json</code> as
+  <code>tools/build-manifest.mjs</code> — intrinsic size, aspect, byte count, a few-hundred-byte
+  indexed-PNG placeholder and per-work colour. Nothing is uploaded; everything runs in this tab.
+</p>
+
+<div id="drop">
+  <p>Drop images (or a folder) anywhere on this page</p>
+  <label class="btn" tabindex="0">Choose files…<input id="pick" type="file" accept="image/*" multiple=""></label>
+  <label class="btn" tabindex="0" style="margin-left:8px">Choose folder…<input id="pickdir" type="file" webkitdirectory="" directory="" multiple=""></label>
+</div>
+
+<div class="bar">
+  <label class="opt">placeholder px <input id="size" type="number" min="4" max="96" value="20"></label>
+  <label class="opt">blur passes <input id="blur" type="number" min="0" max="4" value="1"></label>
+  <label class="opt">max colours <input id="colors" type="number" min="0" max="256" value="96"></label>
+  <label class="opt">matte <input id="matte" type="color" value="#000000"></label>
+  <button id="save" disabled="">Save manifest.json</button>
+  <button id="copy" disabled="">Copy JSON</button>
+</div>
+
+<p class="status" id="status" role="status" aria-live="polite"></p>
+
+<table id="tbl" hidden="">
+  <thead><tr>
+    <th scope="col">file</th><th scope="col">LQIP</th><th scope="col">format</th>
+    <th scope="col" class="num">w×h</th><th scope="col" class="num">aspect</th>
+    <th scope="col" class="num">file</th><th scope="col" class="num">lqip</th>
+    <th scope="col">colour</th><th scope="col">notes</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+
+<textarea id="out" spellcheck="false" aria-label="manifest JSON"></textarea>
+
+<script>
+'use strict';
+
+/* ============================= colour maths ==============================
+   Byte-for-byte the same as tools/lib/color.mjs. Averaging happens in LINEAR
+   light; alpha is composited in sRGB space because that is what a browser
+   does when it paints the real image over this placeholder.               */
+
+const SRGB2LIN = new Float32Array(256);
+for (let i = 0; i < 256; i++) {
+  const c = i / 255;
+  SRGB2LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+const linToSrgb = (l) => (l <= 0 ? 0 : l >= 1 ? 1 : l <= 0.0031308 ? l * 12.92 : 1.055 * Math.pow(l, 1 / 2.4) - 0.055);
+const linToByte = (l) => Math.min(255, Math.max(0, Math.round(linToSrgb(l) * 255)));
+const HEXD = '0123456789abcdef';
+const hexBytes = (r, g, b) => '#' + HEXD[r >> 4] + HEXD[r & 15] + HEXD[g >> 4] + HEXD[g & 15] + HEXD[b >> 4] + HEXD[b & 15];
+const hexLin = (r, g, b) => hexBytes(linToByte(r), linToByte(g), linToByte(b));
+const relLum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+function linToOklab(r, g, b) {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+  ];
+}
+function oklabToLin(L, a, b) {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+  ];
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function kmeansLab(lin, k, iterations = 12, seed = 0x5eed) {
+  const n = lin.length / 3;
+  if (!n) return [];
+  k = Math.max(1, Math.min(k, n, 256));
+  const pts = new Float64Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const lab = linToOklab(lin[i * 3], lin[i * 3 + 1], lin[i * 3 + 2]);
+    pts[i * 3] = lab[0]; pts[i * 3 + 1] = lab[1]; pts[i * 3 + 2] = lab[2];
+  }
+  const rnd = mulberry32(seed);
+  const cent = new Float64Array(k * 3);
+  const first = Math.floor(rnd() * n);
+  cent[0] = pts[first * 3]; cent[1] = pts[first * 3 + 1]; cent[2] = pts[first * 3 + 2];
+  const d2 = new Float64Array(n).fill(Infinity);
+  for (let c = 1; c < k; c++) {
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+      const dx = pts[i * 3] - cent[(c - 1) * 3];
+      const dy = pts[i * 3 + 1] - cent[(c - 1) * 3 + 1];
+      const dz = pts[i * 3 + 2] - cent[(c - 1) * 3 + 2];
+      const d = dx * dx + dy * dy + dz * dz;
+      if (d < d2[i]) d2[i] = d;
+      total += d2[i];
+    }
+    let target = rnd() * total, pick = n - 1;
+    for (let i = 0; i < n; i++) { target -= d2[i]; if (target <= 0) { pick = i; break; } }
+    cent[c * 3] = pts[pick * 3]; cent[c * 3 + 1] = pts[pick * 3 + 1]; cent[c * 3 + 2] = pts[pick * 3 + 2];
+  }
+  const assign = new Int32Array(n), sums = new Float64Array(k * 3), counts = new Int32Array(k);
+  for (let it = 0; it < iterations; it++) {
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      let bi = 0, bd = Infinity;
+      for (let c = 0; c < k; c++) {
+        const dx = pts[i * 3] - cent[c * 3];
+        const dy = pts[i * 3 + 1] - cent[c * 3 + 1];
+        const dz = pts[i * 3 + 2] - cent[c * 3 + 2];
+        const d = dx * dx + dy * dy + dz * dz;
+        if (d < bd) { bd = d; bi = c; }
+      }
+      if (assign[i] !== bi) { assign[i] = bi; moved++; }
+    }
+    sums.fill(0); counts.fill(0);
+    for (let i = 0; i < n; i++) {
+      const c = assign[i];
+      sums[c * 3] += pts[i * 3]; sums[c * 3 + 1] += pts[i * 3 + 1]; sums[c * 3 + 2] += pts[i * 3 + 2];
+      counts[c]++;
+    }
+    for (let c = 0; c < k; c++) {
+      if (!counts[c]) continue;
+      cent[c * 3] = sums[c * 3] / counts[c];
+      cent[c * 3 + 1] = sums[c * 3 + 1] / counts[c];
+      cent[c * 3 + 2] = sums[c * 3 + 2] / counts[c];
+    }
+    if (!moved && it > 0) break;
+  }
+  const out = [];
+  for (let c = 0; c < k; c++) {
+    if (!counts[c]) continue;
+    const [r, g, b] = oklabToLin(cent[c * 3], cent[c * 3 + 1], cent[c * 3 + 2]);
+    out.push({ hex: hexLin(r, g, b), weight: +(counts[c] / n).toFixed(4), L: +cent[c * 3].toFixed(4), C: +Math.hypot(cent[c * 3 + 1], cent[c * 3 + 2]).toFixed(4) });
+  }
+  out.sort((a, b) => b.weight - a.weight);
+  return out;
+}
+function quantize(lin, k, seed = 0x5eed) {
+  const centers = kmeansLab(lin, k, 16, seed);
+  const m = centers.length;
+  const pal = new Uint8Array(m * 3);
+  const labs = new Float64Array(m * 3);
+  for (let i = 0; i < m; i++) {
+    const r = parseInt(centers[i].hex.slice(1, 3), 16);
+    const g = parseInt(centers[i].hex.slice(3, 5), 16);
+    const b = parseInt(centers[i].hex.slice(5, 7), 16);
+    pal[i * 3] = r; pal[i * 3 + 1] = g; pal[i * 3 + 2] = b;
+    const lab = linToOklab(SRGB2LIN[r], SRGB2LIN[g], SRGB2LIN[b]);
+    labs[i * 3] = lab[0]; labs[i * 3 + 1] = lab[1]; labs[i * 3 + 2] = lab[2];
+  }
+  const n = lin.length / 3;
+  const indices = new Uint8Array(n);
+  let sum = 0;
+  for (let p = 0; p < n; p++) {
+    const lab = linToOklab(lin[p * 3], lin[p * 3 + 1], lin[p * 3 + 2]);
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < m; i++) {
+      const dx = lab[0] - labs[i * 3], dy = lab[1] - labs[i * 3 + 1], dz = lab[2] - labs[i * 3 + 2];
+      const d = dx * dx + dy * dy + dz * dz;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    indices[p] = bi; sum += Math.sqrt(bd);
+  }
+  return { indices, pal, meanDE: sum / n };
+}
+function glowColor(lin, boost = 1.35) {
+  const n = lin.length / 3;
+  let wr = 0, wg = 0, wb = 0, ws = 0;
+  for (let i = 0; i < n; i++) {
+    const r = lin[i * 3], g = lin[i * 3 + 1], b = lin[i * 3 + 2];
+    const lab = linToOklab(r, g, b);
+    const w = lab[0] ** 2 * (Math.hypot(lab[1], lab[2]) + 0.05);
+    wr += r * w; wg += g * w; wb += b * w; ws += w;
+  }
+  if (ws <= 0) return '#000000';
+  let [L, a, b] = linToOklab(wr / ws, wg / ws, wb / ws);
+  a *= boost; b *= boost; L = Math.min(1, L * 1.05);
+  let [rr, gg, bb] = oklabToLin(L, a, b);
+  for (let i = 0; i < 12 && (rr < -0.001 || gg < -0.001 || bb < -0.001 || rr > 1.001 || gg > 1.001 || bb > 1.001); i++) {
+    a *= 0.9; b *= 0.9;
+    [rr, gg, bb] = oklabToLin(L, a, b);
+  }
+  return hexLin(rr, gg, bb);
+}
+function gradientCss(lin, w, h, gw = 3, gh = 3) {
+  const cell = (gx, gy) => {
+    const x0 = Math.floor(gx * w / gw), x1 = Math.max(x0 + 1, Math.floor((gx + 1) * w / gw));
+    const y0 = Math.floor(gy * h / gh), y1 = Math.max(y0 + 1, Math.floor((gy + 1) * h / gh));
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let y = y0; y < y1 && y < h; y++) for (let x = x0; x < x1 && x < w; x++) {
+      const i = (y * w + x) * 3; r += lin[i]; g += lin[i + 1]; b += lin[i + 2]; n++;
+    }
+    return n ? hexLin(r / n, g / n, b / n) : '#000000';
+  };
+  const layers = [];
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    const px = gw === 1 ? 50 : Math.round(gx / (gw - 1) * 100);
+    const py = gh === 1 ? 50 : Math.round(gy / (gh - 1) * 100);
+    const c = cell(gx, gy);
+    layers.push(`radial-gradient(70% 70% at ${px}% ${py}%,${c} 0,${c}00 100%)`);
+  }
+  let r = 0, g = 0, b = 0;
+  for (let i = 0; i < lin.length; i += 3) { r += lin[i]; g += lin[i + 1]; b += lin[i + 2]; }
+  const n = lin.length / 3;
+  const avg = hexLin(r / n, g / n, b / n);
+  layers.push(`linear-gradient(${avg},${avg})`);
+  return layers.join(',');
+}
+
+/* ============================== PNG encoder ==============================
+   CompressionStream('deflate') is RFC1950 zlib, which is exactly the IDAT
+   payload format. Baseline in every current browser (Safari 16.4+).        */
+
+const CRC_TABLE = (() => {
+  const t = new Int32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = ~0;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  return (~c) >>> 0;
+}
+async function deflate(bytes) {
+  const cs = new CompressionStream('deflate');
+  const w = cs.writable.getWriter();
+  w.write(bytes); w.close();
+  const parts = [];
+  const rd = cs.readable.getReader();
+  for (;;) {
+    const { done, value } = await rd.read();
+    if (done) break;
+    parts.push(value);
+  }
+  let len = 0;
+  for (const p of parts) len += p.length;
+  const out = new Uint8Array(len);
+  let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+function pngChunk(type, data) {
+  const out = new Uint8Array(12 + data.length);
+  const dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+  return out;
+}
+function concatBytes(list) {
+  let len = 0;
+  for (const b of list) len += b.length;
+  const out = new Uint8Array(len);
+  let o = 0;
+  for (const b of list) { out.set(b, o); o += b.length; }
+  return out;
+}
+const PNG_SIG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function paeth(a, b, c) {
+  const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+}
+async function encodePngRgb(px, w, h) {
+  const stride = w * 3;
+  const raw = new Uint8Array((stride + 1) * h);
+  const prev = new Uint8Array(stride), cur = new Uint8Array(stride);
+  const cand = Array.from({ length: 5 }, () => new Uint8Array(stride));
+  for (let y = 0; y < h; y++) {
+    cur.set(px.subarray(y * stride, y * stride + stride));
+    let best = 0, bestScore = Infinity;
+    for (let f = 0; f < 5; f++) {
+      const o = cand[f];
+      let score = 0;
+      for (let i = 0; i < stride; i++) {
+        const a = i >= 3 ? cur[i - 3] : 0, b = prev[i], c = i >= 3 ? prev[i - 3] : 0;
+        let v;
+        if (f === 0) v = cur[i];
+        else if (f === 1) v = cur[i] - a;
+        else if (f === 2) v = cur[i] - b;
+        else if (f === 3) v = cur[i] - ((a + b) >> 1);
+        else v = cur[i] - paeth(a, b, c);
+        v &= 0xff; o[i] = v;
+        score += v < 128 ? v : 256 - v;
+      }
+      if (score < bestScore) { bestScore = score; best = f; }
+    }
+    raw[y * (stride + 1)] = best;
+    raw.set(cand[best], y * (stride + 1) + 1);
+    prev.set(cur);
+  }
+  const ihdr = new Uint8Array(13);
+  new DataView(ihdr.buffer).setUint32(0, w);
+  new DataView(ihdr.buffer).setUint32(4, h);
+  ihdr[8] = 8; ihdr[9] = 2;
+  return concatBytes([PNG_SIG, pngChunk('IHDR', ihdr), pngChunk('IDAT', await deflate(raw)), pngChunk('IEND', new Uint8Array(0))]);
+}
+async function encodePngIndexed(indices, pal, w, h) {
+  const n = pal.length / 3;
+  const bits = n <= 2 ? 1 : n <= 4 ? 2 : n <= 16 ? 4 : 8;
+  const rowBytes = Math.ceil(w * bits / 8);
+  const raw = new Uint8Array((rowBytes + 1) * h);
+  const per = 8 / bits;
+  for (let y = 0; y < h; y++) {
+    const o = y * (rowBytes + 1) + 1;
+    for (let x = 0; x < w; x++) {
+      const v = indices[y * w + x];
+      if (bits === 8) raw[o + x] = v;
+      else raw[o + ((x / per) | 0)] |= v << (8 - bits - (x % per) * bits);
+    }
+  }
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, w); dv.setUint32(4, h);
+  ihdr[8] = bits; ihdr[9] = 3;
+  return concatBytes([PNG_SIG, pngChunk('IHDR', ihdr), pngChunk('PLTE', pal), pngChunk('IDAT', await deflate(raw)), pngChunk('IEND', new Uint8Array(0))]);
+}
+function bytesToDataUri(bytes) {
+  let s = '';
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return 'data:image/png;base64,' + btoa(s);
+}
+
+/* ======================= header probe (dimensions) =======================
+   The same reader as tools/lib/probe.mjs, trimmed to what the browser needs:
+   intrinsic size before any decode, and EXIF orientation so we can tell
+   whether this browser already applied it to the ImageBitmap.             */
+
+function readExifOrientation(dv, start, limit) {
+  if (start + 8 > limit) return 0;
+  const b0 = dv.getUint8(start), b1 = dv.getUint8(start + 1);
+  let le;
+  if (b0 === 0x49 && b1 === 0x49) le = true;
+  else if (b0 === 0x4d && b1 === 0x4d) le = false;
+  else return 0;
+  if (dv.getUint16(start + 2, le) !== 42) return 0;
+  const ifd0 = start + dv.getUint32(start + 4, le);
+  if (ifd0 + 2 > limit || ifd0 < start) return 0;
+  const count = dv.getUint16(ifd0, le);
+  for (let i = 0; i < count; i++) {
+    const e = ifd0 + 2 + i * 12;
+    if (e + 12 > limit) break;
+    if (dv.getUint16(e, le) === 0x0112) {
+      const v = dv.getUint16(e + 8, le);
+      return v >= 1 && v <= 8 ? v : 0;
+    }
+  }
+  return 0;
+}
+const SOF = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+const STANDALONE = new Set([0x01, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9]);
+const ascii = (dv, o, n) => { let s = ''; for (let i = 0; i < n; i++) s += String.fromCharCode(dv.getUint8(o + i)); return s; };
+
+function probeHeader(buf) {
+  const dv = new DataView(buf);
+  const u8 = new Uint8Array(buf);
+  const len = u8.length;
+  if (len >= 3 && u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) {
+    let off = 2, orientation = 1, sof = null;
+    while (off < len - 1) {
+      if (u8[off] !== 0xff) { off++; continue; }
+      let m = u8[off + 1];
+      while (m === 0xff && off + 2 < len) { off++; m = u8[off + 1]; }
+      if (m === 0xd9) break;
+      if (STANDALONE.has(m)) { off += 2; continue; }
+      if (off + 4 > len) break;
+      const segLen = dv.getUint16(off + 2);
+      const p = off + 4;
+      if (SOF.has(m) && !sof) {
+        sof = { h: dv.getUint16(p + 1), w: dv.getUint16(p + 3), progressive: m === 0xc2 };
+        if (sof.h) break;
+      } else if (m === 0xe1 && segLen > 8 && ascii(dv, p, 6) === 'Exif\0\0') {
+        const o = readExifOrientation(dv, p + 6, Math.min(p + segLen - 2, len));
+        if (o) orientation = o;
+      } else if (m === 0xda) break;
+      off = p + segLen - 2;
+    }
+    if (!sof || !sof.w) throw new Error('no JPEG SOF');
+    return { format: 'jpeg', w: sof.w, h: sof.h, orientation, progressive: sof.progressive };
+  }
+  if (len >= 33 && u8[0] === 0x89 && ascii(dv, 12, 4) === 'IHDR') {
+    return { format: 'png', w: dv.getUint32(16), h: dv.getUint32(20), orientation: 1, hasAlphaFlag: u8[25] === 4 || u8[25] === 6 };
+  }
+  if (len >= 12 && ascii(dv, 0, 4) === 'RIFF' && ascii(dv, 8, 4) === 'WEBP') {
+    let off = 12, w = 0, h = 0, orientation = 1, hasAlphaFlag = false, mode = 'unknown';
+    const end = Math.min(len, 8 + dv.getUint32(4, true));
+    while (off + 8 <= end) {
+      const fourcc = ascii(dv, off, 4);
+      const size = dv.getUint32(off + 4, true);
+      const b = off + 8;
+      if (fourcc === 'VP8X') {
+        hasAlphaFlag = !!(u8[b] & 0x10);
+        w = (u8[b + 4] | (u8[b + 5] << 8) | (u8[b + 6] << 16)) + 1;
+        h = (u8[b + 7] | (u8[b + 8] << 8) | (u8[b + 9] << 16)) + 1;
+        mode = 'extended';
+      } else if (fourcc === 'VP8 ' && u8[b + 3] === 0x9d && u8[b + 4] === 0x01 && u8[b + 5] === 0x2a) {
+        if (!w) { w = dv.getUint16(b + 6, true) & 0x3fff; h = dv.getUint16(b + 8, true) & 0x3fff; }
+        if (mode === 'unknown') mode = 'lossy';
+      } else if (fourcc === 'VP8L' && u8[b] === 0x2f) {
+        const bits = dv.getUint32(b + 1, true);
+        if (!w) { w = (bits & 0x3fff) + 1; h = ((bits >> 14) & 0x3fff) + 1; }
+        if ((bits >>> 28) & 1) hasAlphaFlag = true;
+        if (mode === 'unknown') mode = 'lossless';
+      } else if (fourcc === 'ALPH') hasAlphaFlag = true;
+      else if (fourcc === 'EXIF') {
+        const o = readExifOrientation(dv, b, Math.min(b + size, len));
+        if (o) orientation = o;
+      }
+      off = b + size + (size & 1);
+    }
+    if (!w) throw new Error('no WebP dimensions');
+    return { format: 'webp', w, h, orientation, hasAlphaFlag, webpMode: mode };
+  }
+  if (len >= 6 && ascii(dv, 0, 3) === 'GIF') return { format: 'gif', w: dv.getUint16(6, true), h: dv.getUint16(8, true), orientation: 1 };
+  if (len >= 12 && ascii(dv, 4, 4) === 'ftyp') {
+    const brand = ascii(dv, 8, 4);
+    return { format: brand === 'avif' || brand === 'avis' ? 'avif' : 'heif', w: 0, h: 0, orientation: 1 };
+  }
+  return { format: 'unknown', w: 0, h: 0, orientation: 1 };
+}
+
+/* ============================ image pipeline ============================ */
+
+function makeCanvas(w, h) {
+  if (typeof OffscreenCanvas === 'function') return new OffscreenCanvas(w, h);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+/**
+ * Downscale by repeated halving. Safari has never shipped createImageBitmap's
+ * resizeWidth/resizeHeight/resizeQuality options, and a single drawImage from
+ * 6000px to 20px aliases badly in every engine, so halving is both the portable
+ * path and the correct one.
+ */
+function downscale(bitmap, tw, th) {
+  let w = bitmap.width, h = bitmap.height;
+  let src = bitmap;
+  while (w > tw * 2 || h > th * 2) {
+    const nw = Math.max(tw, Math.round(w / 2));
+    const nh = Math.max(th, Math.round(h / 2));
+    const c = makeCanvas(nw, nh);
+    const ctx = c.getContext('2d', { willReadFrequently: false, alpha: true });
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(src, 0, 0, w, h, 0, 0, nw, nh);
+    if (src !== bitmap && src.width) src.width = 0; // release the intermediate
+    src = c; w = nw; h = nh;
+  }
+  const out = makeCanvas(tw, th);
+  const ctx = out.getContext('2d', { willReadFrequently: true, alpha: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, 0, 0, w, h, 0, 0, tw, th);
+  return ctx.getImageData(0, 0, tw, th);
+}
+
+function thumbSize(w, h, maxSide) {
+  const s = Math.min(1, maxSide / Math.max(w, h));
+  return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)) };
+}
+function blurLinear(lin, w, h, passes) {
+  if (passes <= 0 || w < 3 || h < 3) return lin;
+  let src = lin;
+  for (let p = 0; p < passes; p++) {
+    const tmp = new Float32Array(src.length);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const r = y * w * 3, x0 = Math.max(0, x - 1) * 3, x1 = x * 3, x2 = Math.min(w - 1, x + 1) * 3;
+      for (let c = 0; c < 3; c++) tmp[r + x1 + c] = (src[r + x0 + c] + 2 * src[r + x1 + c] + src[r + x2 + c]) / 4;
+    }
+    const out = new Float32Array(src.length);
+    for (let y = 0; y < h; y++) {
+      const y0 = Math.max(0, y - 1) * w * 3, y1 = y * w * 3, y2 = Math.min(h - 1, y + 1) * w * 3;
+      for (let i = 0; i < w * 3; i++) out[y1 + i] = (tmp[y0 + i] + 2 * tmp[y1 + i] + tmp[y2 + i]) / 4;
+    }
+    src = out;
+  }
+  return src;
+}
+
+function slugify(s) {
+  return s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'work';
+}
+function humanize(base) {
+  const c = base.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').replace(/^\s*\d{1,3}[\s.)-]+/, '').trim();
+  return c ? c[0].toUpperCase() + c.slice(1) : base;
+}
+
+async function analyzeFile(file, opts) {
+  const warnings = [];
+  const buf = await file.arrayBuffer();
+  let info;
+  try { info = probeHeader(buf); }
+  catch (e) { info = { format: 'unknown', w: 0, h: 0, orientation: 1 }; warnings.push('header unreadable: ' + e.message); }
+
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (e) {
+    throw new Error('this browser cannot decode ' + (info.format || 'the file') + ' (' + e.message + ')');
+  }
+
+  // Some engines apply EXIF orientation to the bitmap; some do not. Compare the
+  // bitmap against the header instead of trusting either.
+  const swaps = info.orientation >= 5 && info.orientation <= 8;
+  const headerApplied = swaps && info.w && bitmap.width === info.h && bitmap.height === info.w;
+  let dispW = bitmap.width, dispH = bitmap.height;
+  let needRotate = 0;
+  if (swaps && !headerApplied) { dispW = bitmap.height; dispH = bitmap.width; needRotate = info.orientation; }
+
+  const t = thumbSize(dispW, dispH, opts.size);
+  let img;
+  if (needRotate) {
+    const c = makeCanvas(dispW, dispH);
+    const ctx = c.getContext('2d');
+    ctx.save();
+    const o = info.orientation;
+    if (o === 6) { ctx.translate(dispW, 0); ctx.rotate(Math.PI / 2); }
+    else if (o === 8) { ctx.translate(0, dispH); ctx.rotate(-Math.PI / 2); }
+    else if (o === 5) { ctx.rotate(Math.PI / 2); ctx.scale(1, -1); }
+    else if (o === 7) { ctx.translate(dispW, 0); ctx.rotate(Math.PI / 2); ctx.translate(0, dispH); ctx.scale(1, -1); }
+    ctx.drawImage(bitmap, 0, 0);
+    ctx.restore();
+    img = downscale(c, t.w, t.h);
+  } else {
+    img = downscale(bitmap, t.w, t.h);
+  }
+  bitmap.close?.();
+
+  // sRGB bytes -> linear, compositing any alpha on the matte the way a browser
+  // would (in sRGB space, not linear).
+  const d = img.data;
+  const n = t.w * t.h;
+  const lin = new Float32Array(n * 3);
+  let hasAlpha = false;
+  for (let i = 0; i < n; i++) {
+    const a = d[i * 4 + 3] / 255;
+    if (a === 1) {
+      lin[i * 3] = SRGB2LIN[d[i * 4]];
+      lin[i * 3 + 1] = SRGB2LIN[d[i * 4 + 1]];
+      lin[i * 3 + 2] = SRGB2LIN[d[i * 4 + 2]];
+    } else {
+      hasAlpha = true;
+      // Canvas gives premultiplied-then-unpremultiplied values; re-composite.
+      for (let c = 0; c < 3; c++) {
+        const s = (d[i * 4 + c] / 255) * a + opts.matte[c] * (1 - a);
+        lin[i * 3 + c] = s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      }
+    }
+  }
+  const blurred = blurLinear(lin, t.w, t.h, opts.blur);
+
+  const px = new Uint8Array(blurred.length);
+  for (let i = 0; i < blurred.length; i++) px[i] = linToByte(blurred[i]);
+  let png = await encodePngRgb(px, t.w, t.h);
+  let mode = 'truecolor';
+  if (opts.colors > 0) {
+    for (const k of [...new Set([16, 24, 32, 48, 64, 96, opts.colors])].filter((v) => v > 0 && v <= Math.max(opts.colors, 96)).sort((a, b) => a - b)) {
+      const q = quantize(blurred, k);
+      if (q.meanDE > 0.03) continue;
+      const idx = await encodePngIndexed(q.indices, q.pal, t.w, t.h);
+      if (idx.length < png.length) { png = idx; mode = 'indexed-' + (q.pal.length / 3); }
+      break;
+    }
+  }
+
+  let ar = 0, ag = 0, ab = 0;
+  for (let i = 0; i < n; i++) { ar += blurred[i * 3]; ag += blurred[i * 3 + 1]; ab += blurred[i * 3 + 2]; }
+  ar /= n; ag /= n; ab /= n;
+  const lum = relLum(ar, ag, ab);
+  const lqip = bytesToDataUri(png);
+
+  return {
+    format: info.format,
+    width: dispW, height: dispH,
+    aspect: +(dispW / dispH).toFixed(6),
+    orientation: dispW > dispH ? 'landscape' : dispW < dispH ? 'portrait' : 'square',
+    exifOrientation: info.orientation || 1,
+    bytes: file.size,
+    hasAlpha: hasAlpha || !!info.hasAlphaFlag,
+    lqip, lqipWidth: t.w, lqipHeight: t.h, lqipBytes: lqip.length, lqipMode: mode,
+    color: {
+      avg: hexLin(ar, ag, ab),
+      glow: glowColor(blurred),
+      dark: hexLin(ar * 0.06, ag * 0.06, ab * 0.06),
+      lum: +lum.toFixed(4),
+      isDark: lum < 0.12,
+      palette: kmeansLab(blurred, 5),
+    },
+    gradient: gradientCss(blurred, t.w, t.h, 3, 3),
+    warnings,
+  };
+}
+
+/* ================================== UI ================================== */
+
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status'), tbl = $('tbl'), tbody = tbl.querySelector('tbody'), out = $('out');
+let manifest = null;
+
+const NATURAL = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+const IMAGE_RE = /\.(jpe?g|jfif|png|webp|avif|gif|bmp|tiff?|heic)$/i;
+
+function relPath(f) { return (f.webkitRelativePath || f.name).replace(/^[^/]*\//, ''); }
+
+async function run(files) {
+  const list = files.filter((f) => IMAGE_RE.test(f.name)).sort((a, b) => NATURAL.compare(relPath(a), relPath(b)));
+  if (!list.length) { statusEl.textContent = 'No image files in that drop.'; return; }
+  const opts = {
+    size: Math.max(4, Math.min(96, +$('size').value || 20)),
+    blur: Math.max(0, Math.min(4, +$('blur').value || 0)),
+    colors: Math.max(0, Math.min(256, +$('colors').value || 0)),
+    matte: (() => { const h = $('matte').value.slice(1); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); })(),
+  };
+  tbody.replaceChildren();
+  tbl.hidden = false;
+  const works = [];
+  const seen = new Map();
+  const t0 = performance.now();
+
+  for (let i = 0; i < list.length; i++) {
+    const f = list[i];
+    statusEl.textContent = `Reading ${i + 1} of ${list.length}: ${f.name}`;
+    await new Promise((r) => requestAnimationFrame(r)); // let the status paint
+    const rel = relPath(f);
+    const base = rel.replace(/\.[^.]+$/, '').split('/').pop();
+    let id = slugify(base);
+    const nth = (seen.get(id) ?? 0) + 1;
+    seen.set(id, nth);
+    if (nth > 1) id += '-' + nth;
+
+    let a;
+    try { a = await analyzeFile(f, opts); }
+    catch (e) { a = { error: e.message, warnings: [e.message], bytes: f.size, format: 'unknown', width: 0, height: 0 }; }
+    const work = { id, title: humanize(base), file: rel, src: rel.split('/').map(encodeURIComponent).join('/'), mtime: new Date(f.lastModified).toISOString(), ...a };
+    works.push(work);
+    addRow(work);
+  }
+
+  manifest = {
+    schema: 'lodhang-archive/manifest@1',
+    generatedAt: new Date().toISOString(),
+    source: '(browser)',
+    lqip: { size: opts.size, blur: opts.blur, matte: $('matte').value, colors: opts.colors, encoding: 'image/png;base64' },
+    count: works.length,
+    works,
+  };
+  out.value = JSON.stringify(manifest, null, 2);
+  $('save').disabled = $('copy').disabled = false;
+  const withLqip = works.filter((w) => w.lqip);
+  const avg = withLqip.length ? Math.round(withLqip.reduce((s, w) => s + w.lqipBytes, 0) / withLqip.length) : 0;
+  statusEl.textContent = `${works.length} image${works.length === 1 ? '' : 's'}, ${withLqip.length} with placeholders, average ${avg} B, ${Math.round(performance.now() - t0)} ms. Note the src paths are relative to the folder you dropped.`;
+}
+
+function addRow(w) {
+  const tr = document.createElement('tr');
+  const cell = (html, cls) => { const td = document.createElement('td'); if (cls) td.className = cls; td.append(html); return td; };
+  const img = document.createElement('img');
+  img.className = 'swatch';
+  img.alt = '';
+  if (w.lqip) { img.src = w.lqip; img.style.filter = 'blur(2px)'; }
+  const chips = document.createElement('span');
+  if (w.color) {
+    for (const c of [w.color.avg, w.color.glow]) {
+      const s = document.createElement('span');
+      s.className = 'chip'; s.style.background = c; s.title = c;
+      chips.append(s, ' ');
+    }
+  }
+  const notes = document.createElement('span');
+  if (w.error) { notes.className = 'err'; notes.textContent = w.error; }
+  else if (w.warnings?.length) { notes.className = 'warn'; notes.textContent = w.warnings.join('; '); }
+  else notes.textContent = w.lqipMode || '';
+  tr.append(
+    cell(w.file), cell(img), cell(w.format || ''),
+    cell(`${w.width}×${w.height}`, 'num'), cell(w.aspect ? w.aspect.toFixed(3) : '', 'num'),
+    cell(Math.round(w.bytes / 1024) + ' kB', 'num'), cell((w.lqipBytes || 0) + ' B', 'num'),
+    cell(chips), cell(notes),
+  );
+  tbody.append(tr);
+}
+
+$('pick').addEventListener('change', (e) => run([...e.target.files]));
+$('pickdir').addEventListener('change', (e) => run([...e.target.files]));
+
+const drop = $('drop');
+for (const ev of ['dragenter', 'dragover']) {
+  document.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); });
+}
+for (const ev of ['dragleave', 'drop']) {
+  document.addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'dragleave' && e.relatedTarget) return; drop.classList.remove('over'); });
+}
+document.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  const items = [...(e.dataTransfer?.items ?? [])];
+  const files = [];
+  const walk = async (entry, prefix) => {
+    if (entry.isFile) {
+      await new Promise((res) => entry.file((f) => {
+        try { Object.defineProperty(f, 'webkitRelativePath', { value: prefix + f.name }); } catch { /* read-only in some engines */ }
+        files.push(f); res();
+      }, res));
+    } else if (entry.isDirectory) {
+      const rd = entry.createReader();
+      for (;;) {
+        const batch = await new Promise((res) => rd.readEntries(res, () => res([])));
+        if (!batch.length) break;
+        for (const en of batch) await walk(en, prefix + entry.name + '/');
+      }
+    }
+  };
+  const roots = items.map((it) => it.webkitGetAsEntry?.()).filter(Boolean);
+  if (roots.length) for (const r of roots) await walk(r, '');
+  else files.push(...(e.dataTransfer?.files ?? []));
+  run(files);
+});
+
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(out.value); statusEl.textContent = 'Manifest copied to the clipboard.'; }
+  catch { out.select(); statusEl.textContent = 'Clipboard blocked — the JSON is selected, press Ctrl/Cmd+C.'; }
+});
+
+$('save').addEventListener('click', async () => {
+  const text = out.value;
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'manifest.json',
+        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+      });
+      const ws = await handle.createWritable();
+      await ws.write(text);
+      await ws.close();
+      statusEl.textContent = 'Saved.';
+      return;
+    } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'manifest.json';
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+});
+
+if (typeof CompressionStream !== 'function') {
+  statusEl.className = 'status err';
+  statusEl.textContent = 'This browser has no CompressionStream, so PNG placeholders cannot be encoded. Use Chrome/Edge 80+, Firefox 113+ or Safari 16.4+.';
+}
+</script>
+
+<div id="RESULTS" style="white-space:pre;font-family:monospace"></div>
+<script>
+(async () => {
+  const names = ["bmp.bmp","gif.gif","jpeg-420.jpg","jpeg-422.jpg","jpeg-444.jpg","jpeg-cmyk.jpg","jpeg-exif6-pil.jpg","jpeg-exif6.jpg","jpeg-gray.jpg","jpeg-low.jpg","jpeg-optimize.jpg","jpeg-prog-restart.jpg","jpeg-prog.jpg","jpeg-prog444.jpg","jpeg-restart.jpg","photo-420.jpg","photo-444.jpg","photo.png","photo.webp","png-gray16.png","png-gray8.png","png-interlaced.png","png-l.png","png-mono.png","png-p15.png","png-p64.png","png-pal8.png","png-rgb16.png","png-rgb8.png","png-rgba-half.png","png-rgba8.png","source.png","tall.png","tiny.png","webp-lossless.webp","webp-lossy.webp"];
+  const lines = [];
+  const opts = { size: 20, blur: 1, colors: 96, matte: [0, 0, 0] };
+  for (const n of names) {
+    try {
+      const res = await fetch('../fixtures/' + n);
+      const blob = await res.blob();
+      const file = new File([blob], n, { type: blob.type, lastModified: Date.now() });
+      const a = await analyzeFile(file, opts);
+      lines.push([n, a.format, a.width + 'x' + a.height, a.aspect.toFixed(4),
+                  'exif' + a.exifOrientation, a.lqipWidth + 'x' + a.lqipHeight,
+                  a.lqipBytes + 'B', a.lqipMode, a.color.avg, a.color.glow,
+                  'lum' + a.color.lum].join(' | '));
+    } catch (e) {
+      lines.push(n + ' | ERROR | ' + e.message);
+    }
+  }
+  document.getElementById('RESULTS').textContent = 'BEGIN\n' + lines.join('\n') + '\nEND';
+})();
+</script>
+
+
+</body></html>

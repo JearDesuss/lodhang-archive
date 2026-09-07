@@ -1,0 +1,324 @@
+{
+  "archive": {
+    "title": "LODHANG",
+    "subtitle": "An archive of eleven collage-paintings",
+    "artist": "jaka lodhang",
+    "source": "Collected from the artist's social media. Reproduced here as a private study archive.",
+    "titleNote": "The artist's own titles are unknown. Titles here are working titles assigned by this archive, marked with a bracket.",
+    "count": 11
+  },
+  "motifs": {
+    "beast": "Animal heads on human bodies",
+    "armour": "Plate armour, often empty",
+    "bird": "Birds, usually larger than they should be",
+    "flesh": "The unaltered photographic body",
+    "glitch": "Datamosh strips and hard colour rectangles",
+    "paint": "Visible palette-knife slabs and drips",
+    "foliage": "Tropical planting, mostly photographic",
+    "old-master": "Quoted Baroque, Rococo or Victorian painting",
+    "gold": "Gilt, embroidery and regalia",
+    "text": "Written language inside the picture",
+    "barrier": "Tape, scaffolding, exclusion",
+    "collage": "The seam is deliberately left visible"
+  },
+  "works": [
+    {
+      "id": "w01",
+      "slug": "crown-unworn",
+      "title": "Crown, Unworn",
+      "titleProvisional": true,
+      "aspect": 0.762,
+      "orientation": "portrait",
+      "glow": "#C6C123",
+      "palette": [
+        { "hex": "#C6C123", "name": "Acid Yellow" },
+        { "hex": "#2C4529", "name": "Deep Green" },
+        { "hex": "#9C1B22", "name": "Crimson" },
+        { "hex": "#D8A88A", "name": "Flesh" },
+        { "hex": "#8B9095", "name": "Steel" },
+        { "hex": "#5C57A6", "name": "Violet" },
+        { "hex": "#D74F8E", "name": "Magenta" }
+      ],
+      "motifs": ["beast", "armour", "bird", "flesh", "glitch", "foliage", "gold"],
+      "description": "A nude figure arches backward against the flank of a grey horse whose rider is an empty suit of armour. A gold crown hovers just clear of her head. The sky behind is an unbroken sheet of acid yellow, and the right edge of the picture stops being a painting and becomes a corrupted file.",
+      "fragments": [
+        { "x": 0.55, "y": 0.20, "note": "A crown, floating free. Never actually worn." },
+        { "x": 0.11, "y": 0.12, "note": "A bird leaves at the top left. It is the only thing here that is going anywhere." },
+        { "x": 0.64, "y": 0.36, "note": "The rider is a suit of armour with nobody inside it." },
+        { "x": 0.58, "y": 0.62, "note": "A raptor painted directly onto the horse's flank, as if the animal were a wall." },
+        { "x": 0.92, "y": 0.45, "note": "The right edge dissolves into torn, datamoshed colour." },
+        { "x": 0.25, "y": 0.87, "note": "One bare foot on the ground, the only part of her that is not falling." }
+      ]
+    },
+    {
+      "id": "w02",
+      "slug": "shepherd-is-the-sheep",
+      "title": "The Shepherd Is the Sheep",
+      "titleProvisional": true,
+      "aspect": 0.972,
+      "orientation": "square",
+      "glow": "#8B9A7C",
+      "palette": [
+        { "hex": "#8B9A7C", "name": "Sage" },
+        { "hex": "#E7B6BF", "name": "Blush" },
+        { "hex": "#D8CCB3", "name": "Wool" },
+        { "hex": "#791F2B", "name": "Maroon" },
+        { "hex": "#4E7939", "name": "Leaf" },
+        { "hex": "#1B1B19", "name": "Ink" },
+        { "hex": "#DFC539", "name": "Cadmium" }
+      ],
+      "motifs": ["beast", "foliage", "paint", "old-master", "collage"],
+      "description": "A ram-headed man sits with a fleece across his knee and a staff in his fist, waiting. Behind him the jungle is half photograph and half thick pink-and-sage paint. In the far distance a small figure on a stepladder is calmly painting the sky onto a canvas propped against the trees.",
+      "fragments": [
+        { "x": 0.83, "y": 0.20, "note": "A man on a stepladder is painting the background of the painting you are looking at." },
+        { "x": 0.66, "y": 0.35, "note": "The shepherd wears the head of the thing he tends." },
+        { "x": 0.60, "y": 0.66, "note": "He holds the fleece the way you hold something you have not decided to keep." },
+        { "x": 0.22, "y": 0.30, "note": "Photographic jungle on the right, pure palette-knife paint on the left. The seam is not hidden." },
+        { "x": 0.90, "y": 0.55, "note": "Banana leaves. The picture is in the tropics, whatever century it thinks it is in." }
+      ]
+    },
+    {
+      "id": "w03",
+      "slug": "crusade-of-the-lesser-beasts",
+      "title": "Crusade of the Lesser Beasts",
+      "titleProvisional": true,
+      "aspect": 0.842,
+      "orientation": "portrait",
+      "glow": "#4EC5D2",
+      "palette": [
+        { "hex": "#4EC5D2", "name": "Turquoise" },
+        { "hex": "#E7532A", "name": "Vermilion" },
+        { "hex": "#EEEEE7", "name": "Bone" },
+        { "hex": "#292927", "name": "Black Iron" },
+        { "hex": "#1D51A6", "name": "Cobalt" },
+        { "hex": "#9C1B29", "name": "Crimson" },
+        { "hex": "#8ABE3E", "name": "Lime" }
+      ],
+      "motifs": ["beast", "armour", "bird", "glitch", "barrier"],
+      "description": "Two crusaders in full plate, one with the head of an antelope and one with the head of a goose, ride a white horse that is already going down under them. To the right an enormous seabird fills a third of the picture with its open wings. A red scaffold and a flat cobalt rectangle interrupt everything.",
+      "fragments": [
+        { "x": 0.31, "y": 0.24, "note": "An antelope in a crusader's mantle. The cross on his chest is stitched, not painted." },
+        { "x": 0.55, "y": 0.20, "note": "The second rider is a goose, and he is looking straight at you." },
+        { "x": 0.30, "y": 0.72, "note": "The horse's legs have already given way. Nobody in the picture has noticed." },
+        { "x": 0.80, "y": 0.62, "note": "A gannet, wings open, big enough to be weather rather than an animal." },
+        { "x": 0.52, "y": 0.83, "note": "A flat blue rectangle, placed like a redaction." }
+      ]
+    },
+    {
+      "id": "w04",
+      "slug": "the-kitten-knows",
+      "title": "The Kitten Knows",
+      "titleProvisional": true,
+      "aspect": 0.797,
+      "orientation": "portrait",
+      "glow": "#C6692D",
+      "palette": [
+        { "hex": "#C6692D", "name": "Tiger Orange" },
+        { "hex": "#E6C01E", "name": "Cadmium" },
+        { "hex": "#D89F87", "name": "Flesh" },
+        { "hex": "#2E584D", "name": "Viridian" },
+        { "hex": "#DE469A", "name": "Magenta" },
+        { "hex": "#D7261E", "name": "Red" },
+        { "hex": "#396AB3", "name": "Cobalt" }
+      ],
+      "motifs": ["beast", "flesh", "glitch", "paint"],
+      "description": "A figure curls around itself, arms locked over its knees, wearing the roaring head of a tiger with a mane made of raw yellow paint. Down in the corner, small and unbothered, a kitten looks out from beside a bleeding fingertip. The left third of the canvas has been replaced by stacked bars of glitch.",
+      "fragments": [
+        { "x": 0.42, "y": 0.30, "note": "The roar belongs to the mask. The body underneath is holding very still." },
+        { "x": 0.50, "y": 0.24, "note": "The mane is not painted like fur. It is one loaded stroke of cadmium." },
+        { "x": 0.13, "y": 0.90, "note": "A kitten in the corner, beside a cut finger. It is the calmest thing here." },
+        { "x": 0.08, "y": 0.52, "note": "The left third of the picture has stopped rendering." },
+        { "x": 0.55, "y": 0.60, "note": "A wave tattoo on the forearm, the one detail that dates the body to now." }
+      ]
+    },
+    {
+      "id": "w05",
+      "slug": "three-ways-to-be-a-body",
+      "title": "Three Ways to Be a Body",
+      "titleProvisional": true,
+      "aspect": 1.299,
+      "orientation": "landscape",
+      "glow": "#B4761E",
+      "palette": [
+        { "hex": "#B4761E", "name": "Ochre" },
+        { "hex": "#2D7889", "name": "Cyanotype" },
+        { "hex": "#C8CCD0", "name": "Chrome" },
+        { "hex": "#3E6A32", "name": "Jungle" },
+        { "hex": "#D8281E", "name": "Safety Red" },
+        { "hex": "#F1EFE9", "name": "Bone" },
+        { "hex": "#1D2959", "name": "Indigo" }
+      ],
+      "motifs": ["flesh", "foliage", "barrier", "collage"],
+      "description": "Three bodies share a garden that has been fenced off. On the left a blue-painted torso hangs against an ochre wall. In the centre a chrome mannequin reaches out with a mechanical hand. On the right, behind red-and-white striped barriers, a woman lifts a fan and a wet dog watches.",
+      "fragments": [
+        { "x": 0.10, "y": 0.30, "note": "Painted blue, hung against a wall, cropped at the neck and the knee." },
+        { "x": 0.36, "y": 0.47, "note": "A prosthetic hand, made of the same chrome as the body it belongs to." },
+        { "x": 0.62, "y": 0.72, "note": "Red-and-white barriers. Someone has closed this part of the garden." },
+        { "x": 0.83, "y": 0.28, "note": "She is the only person here who is looking back." },
+        { "x": 0.93, "y": 0.75, "note": "A wet, unimpressed dog." }
+      ]
+    },
+    {
+      "id": "w06",
+      "slug": "bull-dove-blade",
+      "title": "The Bull, the Dove, the Blade",
+      "titleProvisional": true,
+      "aspect": 1.682,
+      "orientation": "panorama",
+      "glow": "#D42F7C",
+      "palette": [
+        { "hex": "#D42F7C", "name": "Magenta" },
+        { "hex": "#883927", "name": "Ox Blood" },
+        { "hex": "#EFECE5", "name": "Dove" },
+        { "hex": "#999DA1", "name": "Steel" },
+        { "hex": "#2D7869", "name": "Teal" },
+        { "hex": "#78BD3D", "name": "Acid Green" },
+        { "hex": "#191917", "name": "Ink" }
+      ],
+      "motifs": ["beast", "bird", "armour", "paint"],
+      "description": "The widest work in the archive, read left to right like a frieze. A bull charges in from the left. In the middle a body lies fallen with a white dove's wings folded over it. On the right an armoured knight stands with his sword point-down in the ground, back turned, finished.",
+      "fragments": [
+        { "x": 0.17, "y": 0.45, "note": "The bull is the only thing in the picture that is moving." },
+        { "x": 0.47, "y": 0.42, "note": "The wings are folded over the body the way a sheet is." },
+        { "x": 0.44, "y": 0.78, "note": "Bare feet, a red cloth, and no face." },
+        { "x": 0.79, "y": 0.50, "note": "He has planted the sword and turned his back. Whatever happened here, he is done." },
+        { "x": 0.05, "y": 0.87, "note": "A finch on a branch in the corner, painted with total ornithological seriousness." }
+      ]
+    },
+    {
+      "id": "w07",
+      "slug": "nation-notion",
+      "title": "Nation / Notion",
+      "titleProvisional": false,
+      "aspect": 0.715,
+      "orientation": "portrait",
+      "glow": "#E7B11E",
+      "palette": [
+        { "hex": "#E7B11E", "name": "Chrome Yellow" },
+        { "hex": "#7A3EA6", "name": "Iris" },
+        { "hex": "#2D8888", "name": "Teal" },
+        { "hex": "#E7469A", "name": "Hot Pink" },
+        { "hex": "#C88969", "name": "Skin" },
+        { "hex": "#1B1917", "name": "Soot" },
+        { "hex": "#6EA7D8", "name": "Sky" }
+      ],
+      "motifs": ["bird", "flesh", "text", "barrier"],
+      "description": "A woman's face is taken over by a bird, its wings spread across her eyes, its feathers running iridescent purple and teal. Across her bare shoulder, in white paint, the word NATION has been written and then written again as NOTION. A band of pink police tape crosses the bottom of the picture. Below it, real sky.",
+      "fragments": [
+        { "x": 0.52, "y": 0.28, "note": "The bird has replaced her eyes. She is not blindfolded; she is occupied." },
+        { "x": 0.62, "y": 0.68, "note": "NATION, corrected to NOTION, without erasing the first attempt." },
+        { "x": 0.50, "y": 0.84, "note": "POLICE LINE, DO NOT CROSS, printed in pink." },
+        { "x": 0.12, "y": 0.35, "note": "A scratched smiley on the wall, the oldest graffiti there is." },
+        { "x": 0.50, "y": 0.95, "note": "Below the tape, real sky. The only calm surface in the work." }
+      ]
+    },
+    {
+      "id": "w08",
+      "slug": "coronation-of-the-very-small",
+      "title": "Coronation of the Very Small",
+      "titleProvisional": true,
+      "aspect": 0.810,
+      "orientation": "portrait",
+      "glow": "#C8952D",
+      "palette": [
+        { "hex": "#C8952D", "name": "Gold" },
+        { "hex": "#9C1B22", "name": "Crimson" },
+        { "hex": "#392A1B", "name": "Umber" },
+        { "hex": "#E7DBBF", "name": "Lace" },
+        { "hex": "#EEE9DF", "name": "Bloom" },
+        { "hex": "#7A5939", "name": "Oak" },
+        { "hex": "#2E584D", "name": "Viridian" }
+      ],
+      "motifs": ["old-master", "gold", "collage"],
+      "description": "A baby, mid-laugh, sits in the full coronation regalia of an emperor: ermine, gold bees, a red velvet sash, a lace jabot, inside a scrupulously painted Dutch interior. The crown is on the floor. Through the window at the back, a man's face watches.",
+      "fragments": [
+        { "x": 0.50, "y": 0.22, "note": "A real photograph of a laughing child, which wrecks the solemnity completely." },
+        { "x": 0.72, "y": 0.92, "note": "The crown has been put down. It is not going back on." },
+        { "x": 0.79, "y": 0.20, "note": "A man's face in the window at the back, from a different painting entirely." },
+        { "x": 0.55, "y": 0.55, "note": "Napoleonic bees in gold thread, rendered at full old-master fidelity." },
+        { "x": 0.20, "y": 0.20, "note": "Cut flowers pinned in from outside the frame, as in a Dutch still life." }
+      ]
+    },
+    {
+      "id": "w09",
+      "slug": "pasture-burning",
+      "title": "Pasture, Burning",
+      "titleProvisional": true,
+      "aspect": 0.818,
+      "orientation": "portrait",
+      "glow": "#D8531E",
+      "palette": [
+        { "hex": "#D8531E", "name": "Ember" },
+        { "hex": "#494357", "name": "Storm Violet" },
+        { "hex": "#C32D79", "name": "Magenta" },
+        { "hex": "#E7C01E", "name": "Toucan Gold" },
+        { "hex": "#2EB4C3", "name": "Cyan" },
+        { "hex": "#393929", "name": "Olive" },
+        { "hex": "#2D6A79", "name": "Teal" }
+      ],
+      "motifs": ["beast", "bird", "old-master", "paint"],
+      "description": "A cow grazes under a violet storm, and its hide has caught fire: rust, scarlet, cobalt and green burning across it like a landscape seen from an aeroplane. A toucan perches on its back with a small parrot beside it. Everything else is a nineteenth-century pastoral, kept intact and left to darken.",
+      "fragments": [
+        { "x": 0.32, "y": 0.22, "note": "A toucan, which does not live anywhere near this pasture." },
+        { "x": 0.55, "y": 0.60, "note": "The hide is coloured like a satellite image of a wildfire." },
+        { "x": 0.72, "y": 0.30, "note": "A second bird, small and iridescent, on the animal's rump." },
+        { "x": 0.50, "y": 0.10, "note": "The sky is the only part left in its original nineteenth-century condition." },
+        { "x": 0.62, "y": 0.28, "note": "A white dead tree, painted into the animal's back as if it grew there." }
+      ]
+    },
+    {
+      "id": "w10",
+      "slug": "assumption-interrupted",
+      "title": "Assumption, Interrupted",
+      "titleProvisional": true,
+      "aspect": 0.734,
+      "orientation": "portrait",
+      "glow": "#C35F1E",
+      "palette": [
+        { "hex": "#C35F1E", "name": "Burnt Orange" },
+        { "hex": "#C8952D", "name": "Gold" },
+        { "hex": "#891F28", "name": "Deep Crimson" },
+        { "hex": "#D8D1C3", "name": "Plaster" },
+        { "hex": "#398893", "name": "Teal" },
+        { "hex": "#495950", "name": "Bronze" },
+        { "hex": "#B4595A", "name": "Rose" }
+      ],
+      "motifs": ["old-master", "gold", "flesh", "collage"],
+      "description": "A Rococo figure is carried upward in a storm of orange, gold and crimson drapery, but her face has gone dark green-grey, like weathered bronze. To the right, in a torn cavity in the cloth, two infants' faces watch. The whole assembly floats on bare, distressed plaster, and its edges are unmistakably torn paper.",
+      "fragments": [
+        { "x": 0.44, "y": 0.22, "note": "Her face has oxidised. Everything else is still gold." },
+        { "x": 0.76, "y": 0.44, "note": "Two children's faces, watching from a hole in the fabric." },
+        { "x": 0.20, "y": 0.55, "note": "The collage never pretends to be seamless. You can see the torn edge." },
+        { "x": 0.52, "y": 0.85, "note": "A cherub's leg and a red sandal, all that is left of the original composition's lower half." },
+        { "x": 0.10, "y": 0.15, "note": "Bare, scraped plaster stands in for heaven." }
+      ]
+    },
+    {
+      "id": "w11",
+      "slug": "wont-hold-still",
+      "title": "Won't Hold Still",
+      "titleProvisional": true,
+      "aspect": 0.845,
+      "orientation": "portrait",
+      "glow": "#D8CCAF",
+      "palette": [
+        { "hex": "#D8CCAF", "name": "Straw" },
+        { "hex": "#D8C149", "name": "Veil Gold" },
+        { "hex": "#191919", "name": "Black" },
+        { "hex": "#898971", "name": "Sage" },
+        { "hex": "#C3585A", "name": "Rose" },
+        { "hex": "#EEECE5", "name": "Chalk" },
+        { "hex": "#6A4A2D", "name": "Walnut" }
+      ],
+      "motifs": ["old-master", "collage", "glitch"],
+      "description": "A Victorian girl in a straw bonnet sits for her portrait beside a second figure whose face has been pulled into a long yellow smear. A servant girl stands to the left holding a small dog. A church spire is just visible over the roofline. The whole picture has been dragged sideways, as if the exposure ran long.",
+      "fragments": [
+        { "x": 0.38, "y": 0.28, "note": "The bonnet is the sharpest thing in the picture, and everything else slides off it." },
+        { "x": 0.66, "y": 0.48, "note": "The second sitter's face has been dragged into one long exposure." },
+        { "x": 0.13, "y": 0.42, "note": "She is standing where servants stand in these paintings: at the edge, holding the dog." },
+        { "x": 0.78, "y": 0.30, "note": "A church spire over the roofline, from the town this painting was made in." },
+        { "x": 0.10, "y": 0.75, "note": "A blank white band cuts the bottom left. The painting's own margin, left showing." }
+      ]
+    }
+  ]
+}

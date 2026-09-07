@@ -1,0 +1,170 @@
+/* LODHANG — tokens.
+ *
+ * The contract is DESIGN.md. Anything here that is not in DESIGN.md is a bug,
+ * and any literal hex or px in a component file is also a bug.
+ *
+ * Two families of colour live here and they must not be confused:
+ *   --n-*  the fixed warm-black neutral ramp. Authored. Never changes.
+ *   --c-*  the light in the room. Derived at runtime from the lit work's own
+ *          pixels by assets/js/color.js. Never authored, never a brand colour.
+ */
+
+:root {
+  /* ---- neutral ramp — warm black, authored, fixed ---------------------- */
+  --n-void: #08080a;
+  --n-pitch: #0c0c0e;
+  --n-cellar: #131315;
+  --n-stone: #1a1a1c;
+  --n-hairline: #23231f;
+  --n-iron: #3a3a36;
+  --n-ash: #5b5b54;
+  --n-fog: #8c8c83;
+  --n-bone: #bebcb2;
+  --n-chalk: #efede6;
+
+  /* ---- the light — replaced every frame by applyTheme() ---------------- */
+  /* Registered as <color> in color.js so they can actually transition.     */
+  --c-glow: #8c8c83;
+  --c-bloom: #2a2a28;
+  --c-wash: #141414;
+  --c-ink: #efede6;
+  --c-ink-dim: #bebcb2;
+  --c-ink-faint: #8c8c83;
+  --c-accent: #bebcb2;
+  --c-line: #23231f;
+  --c-hue: 60;
+
+  /* How far each surface is carried toward the lit hue. DESIGN.md, colors. */
+  --mix-wall: 8%;
+  --mix-rule: 14%;
+  --mix-meta: 20%;
+
+  /* ---- type ------------------------------------------------------------ */
+  --f-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --f-sans: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --t-display: 400 72px/0.96 var(--f-serif);
+  --t-title: 400 40px/1.06 var(--f-serif);
+  --t-work: 400 26px/1.14 var(--f-serif);
+  --t-lede: 400 19px/1.55 var(--f-sans);
+  --t-body: 400 15px/1.62 var(--f-sans);
+  --t-small: 400 13px/1.5 var(--f-sans);
+  --t-meta: 500 11px/1.3 var(--f-mono);
+  --t-micro: 500 9px/1.2 var(--f-mono);
+
+  --tr-display: -0.028em;
+  --tr-title: -0.022em;
+  --tr-work: -0.014em;
+  --tr-lede: -0.006em;
+  --tr-meta: 0.12em;
+  --tr-micro: 0.16em;
+
+  /* ---- space — 4px base, four named numbers --------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;   /* elementGap */
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 28px;   /* cardPadding */
+  --s-7: 40px;
+  --s-8: 64px;
+  --s-9: 120px;  /* sectionGap */
+  --page: 1320px;
+  --margin: 200px; /* the right-hand metadata margin */
+
+  /* ---- radius — three, total ------------------------------------------ */
+  --r-control: 2px;
+  --r-image: 0px;
+  --r-tick: 9999px;
+
+  /* ---- motion ---------------------------------------------------------- */
+  /* Weighted, never bouncy. A painting is heavy; nothing here overshoots.  */
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1);      /* arrivals, the workhorse */
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);   /* view changes */
+  --e-in: cubic-bezier(0.55, 0, 1, 0.45);      /* departures */
+  --d-tap: 120ms;      /* a control acknowledging a press */
+  --d-move: 340ms;     /* something changing position or state */
+  --d-light: 900ms;    /* the room relighting — slow, because light is slow */
+  --d-view: 620ms;     /* hall <-> study */
+
+  --wall-max: 78vh;    /* every work gets this, panorama and portrait alike */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-tap: 1ms;
+    --d-move: 1ms;
+    --d-light: 1ms;
+    --d-view: 1ms;
+  }
+}
+
+/* ---- reset ------------------------------------------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Any `display` in a component rule beats the `hidden` attribute's UA default,
+ * which silently leaves fixed full-screen overlays painting over the whole page.
+ * This has to win, so it is the one !important in the system. */
+[hidden] { display: none !important; }
+
+html {
+  background: var(--n-void);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--n-void);
+  color: var(--n-bone);
+  font: var(--t-body);
+  font-feature-settings: 'cv05', 'ss03';
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { display: block; max-width: 100%; border-radius: var(--r-image); }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 1px solid var(--c-accent);
+  outline-offset: 3px;
+}
+
+/* Utility used by every measured quantity in the site, and nothing else. */
+.mono {
+  font: var(--t-meta);
+  letter-spacing: var(--tr-meta);
+  font-feature-settings: 'zero', 'tnum';
+  text-transform: uppercase;
+}
+
+.micro {
+  font: var(--t-micro);
+  letter-spacing: var(--tr-micro);
+  font-feature-settings: 'zero', 'tnum';
+  text-transform: uppercase;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

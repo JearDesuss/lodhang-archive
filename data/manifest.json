@@ -1,0 +1,227 @@
+{
+  "generated": "run tools/ingest.py to refresh",
+  "resolved": 0,
+  "total": 11,
+  "entries": [
+    {
+      "id": "w01",
+      "slug": "crown-unworn",
+      "src": "assets/placeholder/crown-unworn.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.762,
+      "lqip": null,
+      "palette": [
+        "#C6C123",
+        "#2C4529",
+        "#9C1B22",
+        "#D8A88A",
+        "#8B9095",
+        "#5C57A6",
+        "#D74F8E"
+      ],
+      "glow": "#C6C123",
+      "placeholder": true
+    },
+    {
+      "id": "w02",
+      "slug": "shepherd-is-the-sheep",
+      "src": "assets/placeholder/shepherd-is-the-sheep.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.972,
+      "lqip": null,
+      "palette": [
+        "#8B9A7C",
+        "#E7B6BF",
+        "#D8CCB3",
+        "#791F2B",
+        "#4E7939",
+        "#1B1B19",
+        "#DFC539"
+      ],
+      "glow": "#8B9A7C",
+      "placeholder": true
+    },
+    {
+      "id": "w03",
+      "slug": "crusade-of-the-lesser-beasts",
+      "src": "assets/placeholder/crusade-of-the-lesser-beasts.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.842,
+      "lqip": null,
+      "palette": [
+        "#4EC5D2",
+        "#E7532A",
+        "#EEEEE7",
+        "#292927",
+        "#1D51A6",
+        "#9C1B29",
+        "#8ABE3E"
+      ],
+      "glow": "#4EC5D2",
+      "placeholder": true
+    },
+    {
+      "id": "w04",
+      "slug": "the-kitten-knows",
+      "src": "assets/placeholder/the-kitten-knows.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.797,
+      "lqip": null,
+      "palette": [
+        "#C6692D",
+        "#E6C01E",
+        "#D89F87",
+        "#2E584D",
+        "#DE469A",
+        "#D7261E",
+        "#396AB3"
+      ],
+      "glow": "#C6692D",
+      "placeholder": true
+    },
+    {
+      "id": "w05",
+      "slug": "three-ways-to-be-a-body",
+      "src": "assets/placeholder/three-ways-to-be-a-body.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 1.299,
+      "lqip": null,
+      "palette": [
+        "#B4761E",
+        "#2D7889",
+        "#C8CCD0",
+        "#3E6A32",
+        "#D8281E",
+        "#F1EFE9",
+        "#1D2959"
+      ],
+      "glow": "#B4761E",
+      "placeholder": true
+    },
+    {
+      "id": "w06",
+      "slug": "bull-dove-blade",
+      "src": "assets/placeholder/bull-dove-blade.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 1.682,
+      "lqip": null,
+      "palette": [
+        "#D42F7C",
+        "#883927",
+        "#EFECE5",
+        "#999DA1",
+        "#2D7869",
+        "#78BD3D",
+        "#191917"
+      ],
+      "glow": "#D42F7C",
+      "placeholder": true
+    },
+    {
+      "id": "w07",
+      "slug": "nation-notion",
+      "src": "assets/placeholder/nation-notion.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.715,
+      "lqip": null,
+      "palette": [
+        "#E7B11E",
+        "#7A3EA6",
+        "#2D8888",
+        "#E7469A",
+        "#C88969",
+        "#1B1917",
+        "#6EA7D8"
+      ],
+      "glow": "#E7B11E",
+      "placeholder": true
+    },
+    {
+      "id": "w08",
+      "slug": "coronation-of-the-very-small",
+      "src": "assets/placeholder/coronation-of-the-very-small.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.81,
+      "lqip": null,
+      "palette": [
+        "#C8952D",
+        "#9C1B22",
+        "#392A1B",
+        "#E7DBBF",
+        "#EEE9DF",
+        "#7A5939",
+        "#2E584D"
+      ],
+      "glow": "#C8952D",
+      "placeholder": true
+    },
+    {
+      "id": "w09",
+      "slug": "pasture-burning",
+      "src": "assets/placeholder/pasture-burning.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.818,
+      "lqip": null,
+      "palette": [
+        "#D8531E",
+        "#494357",
+        "#C32D79",
+        "#E7C01E",
+        "#2EB4C3",
+        "#393929",
+        "#2D6A79"
+      ],
+      "glow": "#D8531E",
+      "placeholder": true
+    },
+    {
+      "id": "w10",
+      "slug": "assumption-interrupted",
+      "src": "assets/placeholder/assumption-interrupted.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.734,
+      "lqip": null,
+      "palette": [
+        "#C35F1E",
+        "#C8952D",
+        "#891F28",
+        "#D8D1C3",
+        "#398893",
+        "#495950",
+        "#B4595A"
+      ],
+      "glow": "#C35F1E",
+      "placeholder": true
+    },
+    {
+      "id": "w11",
+      "slug": "wont-hold-still",
+      "src": "assets/placeholder/wont-hold-still.jpg",
+      "width": null,
+      "height": null,
+      "aspect": 0.845,
+      "lqip": null,
+      "palette": [
+        "#D8CCAF",
+        "#D8C149",
+        "#191919",
+        "#898971",
+        "#C3585A",
+        "#EEECE5",
+        "#6A4A2D"
+      ],
+      "glow": "#D8CCAF",
+      "placeholder": true
+    }
+  ]
+}
