@@ -191,30 +191,8 @@ export class Wall {
     for (const L of this.lights) {
       const a = Math.max(0, Math.min(1, L.intensity))
       if (a <= 0.001) continue
-
-      const cx = L.x + L.w / 2
-      // Bias the source upward: a hung canvas spills more light above it than
-      // below, where its own bottom edge is usually the darkest part.
-      const cy = L.y + L.h * 0.42
-      const radius = Math.max(L.w, L.h) * 1.5
-
-      // Elongated vertically, wider at the top. Drawn as a scaled circle so the
-      // gradient stays a real radial falloff rather than a stretched ellipse
-      // with a visibly flat core.
-      ctx.save()
-      ctx.translate(cx, cy)
-      ctx.scale(1, 1.22)
-      const g = ctx.createRadialGradient(0, 0, radius * 0.06, 0, 0, radius)
-      g.addColorStop(0, this._rgba(L.color, 0.82 * a))
-      g.addColorStop(0.22, this._rgba(L.color, 0.44 * a))
-      g.addColorStop(0.48, this._rgba(L.color, 0.17 * a))
-      g.addColorStop(0.74, this._rgba(L.color, 0.05 * a))
-      g.addColorStop(1, this._rgba(L.color, 0))
-      ctx.fillStyle = g
-      ctx.beginPath()
-      ctx.arc(0, 0, radius, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.restore()
+      if (L.edges) this._spillPerEdge(L, a)
+      else this._spillRadial(L, a)
     }
 
     // 2. The plaster, multiplied in. Against the unlit Void this is a no-op,
@@ -233,6 +211,76 @@ export class Wall {
     ctx.fillStyle = floor
     ctx.fillRect(0, h * 0.72, w, h * 0.28)
     ctx.globalCompositeOperation = 'source-over'
+  }
+
+  /** The fallback: one symmetric pool, used when the edges cannot be measured. */
+  _spillRadial(L, a) {
+    const { ctx } = this
+    const cx = L.x + L.w / 2
+    // Bias the source upward: a hung canvas spills more light above it than
+    // below, where its own bottom edge is usually the darkest part.
+    const cy = L.y + L.h * 0.42
+    const radius = Math.max(L.w, L.h) * 1.5
+
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.scale(1, 1.22)
+    const g = ctx.createRadialGradient(0, 0, radius * 0.06, 0, 0, radius)
+    g.addColorStop(0, this._rgba(L.color, 0.82 * a))
+    g.addColorStop(0.22, this._rgba(L.color, 0.44 * a))
+    g.addColorStop(0.48, this._rgba(L.color, 0.17 * a))
+    g.addColorStop(0.74, this._rgba(L.color, 0.05 * a))
+    g.addColorStop(1, this._rgba(L.color, 0))
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.arc(0, 0, radius, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  /**
+   * Four directional spills, one per edge, each in that edge's own colour.
+   *
+   * A painting whose sky is acid yellow and whose foliage is near-black does not
+   * light a wall evenly: it floods above and barely touches the floor. Each edge
+   * gets a radial gradient centred on its midpoint, clipped to the half-plane
+   * outside that edge — clipping is what turns a symmetric halo into light
+   * travelling in a direction.
+   *
+   * Reach is deliberately unequal. Light rises, so the top throws furthest; the
+   * bottom edge of a hung canvas is usually its darkest passage and its pool is
+   * short, which is what makes the work look like it is standing on a floor.
+   */
+  _spillPerEdge(L, a) {
+    const { ctx } = this
+    const base = Math.max(L.w, L.h)
+    const sides = [
+      { key: 'top', reach: base * 1.25, cx: L.x + L.w / 2, cy: L.y,
+        clip: [L.x - base, L.y - base * 1.4, L.w + base * 2, base * 1.4] },
+      { key: 'bottom', reach: base * 0.68, cx: L.x + L.w / 2, cy: L.y + L.h,
+        clip: [L.x - base, L.y + L.h, L.w + base * 2, base * 0.9] },
+      { key: 'left', reach: base * 0.95, cx: L.x, cy: L.y + L.h / 2,
+        clip: [L.x - base * 1.1, L.y - base * 0.4, base * 1.1, L.h + base * 0.8] },
+      { key: 'right', reach: base * 0.95, cx: L.x + L.w, cy: L.y + L.h / 2,
+        clip: [L.x + L.w, L.y - base * 0.4, base * 1.1, L.h + base * 0.8] },
+    ]
+
+    for (const s of sides) {
+      const colour = L.edges[s.key] || L.color
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(s.clip[0], s.clip[1], s.clip[2], s.clip[3])
+      ctx.clip()
+      const g = ctx.createRadialGradient(s.cx, s.cy, s.reach * 0.04, s.cx, s.cy, s.reach)
+      g.addColorStop(0, this._rgba(colour, 0.9 * a))
+      g.addColorStop(0.24, this._rgba(colour, 0.42 * a))
+      g.addColorStop(0.55, this._rgba(colour, 0.14 * a))
+      g.addColorStop(0.8, this._rgba(colour, 0.04 * a))
+      g.addColorStop(1, this._rgba(colour, 0))
+      ctx.fillStyle = g
+      ctx.fillRect(s.clip[0], s.clip[1], s.clip[2], s.clip[3])
+      ctx.restore()
+    }
   }
 
   _rgba(hex, a) {

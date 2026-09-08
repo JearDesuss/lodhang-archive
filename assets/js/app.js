@@ -14,6 +14,7 @@ import { load, order, ORDERS, hueOf, dbPut, dbClear } from './store.js'
 import { Wall } from './wall.js'
 import { mountImport } from './import.js'
 import { mountSampler } from './sampler.js'
+import { edgesOf } from './edges.js'
 
 const $ = (sel, root = document) => root.querySelector(sel)
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
@@ -174,9 +175,13 @@ function collectLights({ markLit = false } = {}) {
     if (!work) continue
 
     if (intensity > 0.001 && r.bottom > -200 && r.top < innerHeight + 200) {
+      // Measured lazily and cached, and only for works actually on screen, so a
+      // scroll never pays for the other ten.
+      const img = $('img', frame)
       lights.push({
         x: r.left, y: r.top, w: r.width, h: r.height,
         color: work.theme.glow,
+        edges: img ? edgesOf(img) : null,
         intensity: intensity ** 1.35,
       })
     }
