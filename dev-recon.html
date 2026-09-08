@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>reconstructions</title>
+<style>
+ body{margin:0;background:#08080a;color:#bebcb2;font:11px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.1em}
+ .g{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px;align-items:end}
+ canvas{width:100%;height:auto;display:block;border:1px solid #23231f}
+ figure{margin:0} figcaption{padding:5px 0;color:#8c8c83;text-transform:uppercase}
+</style></head><body><div class="g" id="g"></div>
+<script type="module">
+import { reconstruct } from './assets/js/reconstruct.js'
+const cat = await (await fetch('data/catalog.json')).json()
+const g = document.getElementById('g')
+for (const w of cat.works) {
+  const work = { ...w, palette: w.palette.map(p => p.hex) }
+  const fig = document.createElement('figure')
+  const cv = reconstruct(work, 900)
+  fig.appendChild(cv)
+  const cap = document.createElement('figcaption')
+  cap.textContent = `${w.id} ${w.title} · ${w.motifs.join(',')}`
+  fig.appendChild(cap)
+  g.appendChild(fig)
+}
+window.__ready = true; window.__diag = { view:'recon', works: cat.works.length }
+</script></body></html>

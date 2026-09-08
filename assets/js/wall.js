@@ -254,15 +254,34 @@ export class Wall {
   _spillPerEdge(L, a) {
     const { ctx } = this
     const base = Math.max(L.w, L.h)
+    const mx = L.x + L.w / 2
+    const my = L.y + L.h / 2
+
+    /**
+     * The clip must always be larger than the gradient it contains, or the
+     * gradient gets cut before it fades to zero and the clip's own rectangle
+     * becomes visible on the plaster as a hard-edged box. Padding each clip to
+     * at least the reach in the direction ALONG the edge is what prevents that;
+     * the only hard edge left is the one on the painting's own boundary, which
+     * the painting itself covers.
+     */
+    const PAD = 1.18
+    const side = (key, reach, cx, cy, dir) => {
+      const halfAlong = Math.max(dir.x ? L.h / 2 : L.w / 2, reach) * PAD
+      const depth = reach * PAD
+      return {
+        key, reach, cx, cy,
+        clip: dir.x
+          ? [cx + (dir.x < 0 ? -depth : 0), cy - halfAlong, depth, halfAlong * 2]
+          : [cx - halfAlong, cy + (dir.y < 0 ? -depth : 0), halfAlong * 2, depth],
+      }
+    }
+
     const sides = [
-      { key: 'top', reach: base * 1.25, cx: L.x + L.w / 2, cy: L.y,
-        clip: [L.x - base, L.y - base * 1.4, L.w + base * 2, base * 1.4] },
-      { key: 'bottom', reach: base * 0.68, cx: L.x + L.w / 2, cy: L.y + L.h,
-        clip: [L.x - base, L.y + L.h, L.w + base * 2, base * 0.9] },
-      { key: 'left', reach: base * 0.95, cx: L.x, cy: L.y + L.h / 2,
-        clip: [L.x - base * 1.1, L.y - base * 0.4, base * 1.1, L.h + base * 0.8] },
-      { key: 'right', reach: base * 0.95, cx: L.x + L.w, cy: L.y + L.h / 2,
-        clip: [L.x + L.w, L.y - base * 0.4, base * 1.1, L.h + base * 0.8] },
+      side('top', base * 1.25, mx, L.y, { y: -1 }),
+      side('bottom', base * 0.68, mx, L.y + L.h, { y: 1 }),
+      side('left', base * 0.95, L.x, my, { x: -1 }),
+      side('right', base * 0.95, L.x + L.w, my, { x: 1 }),
     ]
 
     for (const s of sides) {

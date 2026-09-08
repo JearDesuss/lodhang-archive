@@ -15,6 +15,7 @@ import { Wall } from './wall.js'
 import { mountImport } from './import.js'
 import { mountSampler } from './sampler.js'
 import { edgesOf } from './edges.js'
+import { reconstruct } from './reconstruct.js'
 
 const $ = (sel, root = document) => root.querySelector(sel)
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
@@ -74,29 +75,14 @@ function renderHall() {
           <button class="canvas-frame" type="button"
                   aria-label="Study ${w.title}">
             <img src="${w.src}" alt="${w.title} — ${w.description.slice(0, 120)}"
-                 width="${w.width ?? ''}" height="${w.height ?? ''}"
-                 loading="${w.index < 2 ? 'eager' : 'lazy'}" decoding="async">
+                 loading="${w.index < 4 ? 'eager' : 'lazy'}" decoding="async">
           </button>
         </div>
-        <div class="plate">
-          <span class="plate-no mono">PL. ${w.plate}</span>
-          <h2 class="plate-title">${w.title}${prov}</h2>
-          <div class="swatches">
-            ${w.palette.slice(0, 7).map((hex) =>
-              `<button class="swatch" style="background:${hex}" data-hex="${hex}"
-                       title="${hex}" aria-label="Light the room with ${hex}"></button>`).join('')}
-          </div>
-          <dl class="plate-rows">
-            <div class="plate-row"><dt>Format</dt><dd>${w.orientation}</dd></div>
-            <div class="plate-row"><dt>Ratio</dt><dd>${w.aspect.toFixed(3)}</dd></div>
-            <div class="plate-row"><dt>Pixels</dt><dd>${
-              w.width ? `${fmtInt(w.width)} × ${fmtInt(w.height)}` : '—'}</dd></div>
-            <div class="plate-row"><dt>Light</dt><dd>${oklchText(w.glow)}</dd></div>
-            <div class="plate-row"><dt>Motifs</dt><dd>${w.motifs.join(' · ')}</dd></div>
-          </dl>
-          ${w.placeholder ? `<p class="stand-in-note micro">STAND-IN. THE FILE FOR THIS
-             PLATE IS NOT IN THE ARCHIVE YET.</p>` : ''}
-        </div>
+        <figcaption class="tag">
+          <span class="tag-no mono">${w.plate}</span>
+          <span class="tag-title">${w.title}${prov}</span>
+          ${w.placeholder ? '<span class="tag-recon micro">RECON</span>' : ''}
+        </figcaption>
       </div>`
 
     station.querySelector('.canvas-frame').addEventListener('click', () => openStudy(w.slug))
@@ -129,8 +115,11 @@ function sizeStations() {
   // On a narrow screen the plate sits under the work rather than beside it, so
   // the work can take a much larger share of the viewport — at the desktop
   // constant it renders postage-stamp sized with the margin it no longer needs.
+  // The hall is a hang, not a slideshow: several works share the screen, so each
+  // gets a small share of the viewport area. Constant area still governs, so the
+  // panorama and the stele remain equal-weight objects next to each other.
   const narrow = innerWidth < 860
-  const A = (narrow ? 0.46 : 0.28) * innerWidth * innerHeight
+  const A = (narrow ? 0.30 : 0.095) * innerWidth * innerHeight
   for (const st of $$('.station')) {
     const work = state.works.find((w) => w.slug === st.dataset.slug)
     const img = $('img', st)
@@ -139,14 +128,18 @@ function sizeStations() {
     let w = Math.sqrt(A * ar)
     let h = Math.sqrt(A / ar)
     // Clamps so a very wide or very tall work cannot run off the viewport.
-    const maxH = innerHeight * (narrow ? 0.62 : 0.78)
-    const maxW = innerWidth * (narrow ? 0.88 : 0.62)
+    const maxH = innerHeight * (narrow ? 0.52 : 0.62)
+    const maxW = innerWidth * (narrow ? 0.88 : 0.42)
     const k = Math.min(1, maxH / h, maxW / w)
     w *= k
     h *= k
     img.style.width = `${Math.round(w)}px`
     img.style.height = `${Math.round(h)}px`
     img.style.maxHeight = 'none'
+    // Pin the whole station to the picture's width. Without this the tombstone
+    // label can be wider than the work it belongs to, which widens the flex item
+    // and pushes the hang out of alignment.
+    st.style.width = `${Math.round(w)}px`
   }
 }
 
@@ -170,7 +163,7 @@ function collectLights({ markLit = false } = {}) {
 
     // Falls off over one viewport height: two adjacent works both contribute
     // near the boundary, which is what produces a visible seam between them.
-    const intensity = Math.max(0, 1 - dist / (innerHeight * 0.78))
+    const intensity = Math.max(0, 1 - dist / (innerHeight * 0.62))
     const work = state.works.find((w) => w.slug === st.dataset.slug)
     if (!work) continue
 
@@ -186,7 +179,7 @@ function collectLights({ markLit = false } = {}) {
       })
     }
     if (dist < bestDist) { bestDist = dist; best = { st, work } }
-    if (markLit) st.dataset.lit = intensity > 0.55 ? '1' : '0'
+    if (markLit) st.dataset.lit = intensity > 0.30 ? '1' : '0'
   }
   return { lights, best }
 }
@@ -280,7 +273,7 @@ function renderLedger() {
             <td class="mono">${w.plate}</td>
             <td><img class="led-thumb" src="${w.src}" alt="" loading="lazy" decoding="async"></td>
             <td><span class="led-title">${w.title}</span>${
-              w.placeholder ? ' <span class="micro">STAND-IN</span>' : ''}</td>
+              w.placeholder ? ' <span class="micro">RECONSTRUCTION</span>' : ''}</td>
             <td class="mono">${w.orientation.toUpperCase()} ${w.aspect.toFixed(2)}</td>
             <td class="mono">${hueOf(w).toFixed(0)}°</td>
             <td><div class="motif-tags">${w.motifs.map((m) =>
@@ -328,7 +321,7 @@ function openStudy(slug) {
       <p class="micro" style="color:var(--c-ink-faint)">${oklchText(w.glow)}</p>
       <ul class="frag-list">${w.fragments.map((f, i) =>
         `<li class="frag-item" data-i="${i}">${f.note}</li>`).join('')}</ul>
-      ${w.placeholder ? '<p class="stand-in-note micro">STAND-IN. NOT THE WORK.</p>' : ''}
+      ${w.placeholder ? '<p class="stand-in-note micro">RECONSTRUCTION. NOT THE WORK.</p>' : ''}
     </div>`
 
   const img = $('#studyimg')
@@ -626,6 +619,36 @@ function wireKeys() {
   addEventListener('blur', () => showCollation(false))
 }
 
+/**
+ * Paint a reconstruction for every work that has no file.
+ *
+ * An archive with no images in it is not a restrained archive, it is an empty
+ * one — the whole design premise (a dark room lit by the paintings) collapses
+ * when there is nothing to do the lighting. So each entry paints itself from its
+ * catalogue record until the real file arrives, at which point this never runs
+ * for it again.
+ *
+ * Emitted as blobs rather than data URLs: eleven base64 paintings is a third
+ * more bytes than the same eleven as binary, for no benefit.
+ */
+async function paintReconstructions() {
+  const pending = state.works.filter((w) => w.placeholder)
+  if (!pending.length) return
+  await Promise.all(pending.map((w) => new Promise((resolve) => {
+    try {
+      reconstruct(w, 1200).toBlob((blob) => {
+        if (blob) {
+          w.src = URL.createObjectURL(blob)
+          w.reconstructed = true
+        }
+        resolve()
+      }, 'image/jpeg', 0.88)
+    } catch {
+      resolve() // fall back to the shipped stand-in
+    }
+  })))
+}
+
 // ------------------------------------------------------------------- boot ---
 async function boot() {
   registerThemeProperties()
@@ -642,6 +665,7 @@ async function boot() {
   }
 
   Object.assign(state, data)
+  await paintReconstructions()
   applyTheme(state.works[0].theme)
 
   state.wall = new Wall($('#wall'), { reducedMotion: reduced })

@@ -135,38 +135,34 @@
 .view.is-on { display: block; }
 
 /* --------------------------------------------------------------- hall ----- */
-/* One vertical descent. Every work gets the same 78vh envelope, so the
- * panorama and the tall portrait stand on the same floor line. */
-.station {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr minmax(auto, var(--page)) 1fr;
-  align-items: center;
-  /* Tight. With a full section gap here the midpoint between two works is a
-   * dead screen with nothing lit, which reads as a bug rather than as a seam. */
-  padding: var(--s-8) var(--s-6);
-  scroll-margin-top: 0;
-}
-/* Symmetric on purpose. An asymmetric grid would push the work off the plumb
- * rule, and the rule running down the centre of every work is the whole reason
- * eleven different aspect ratios read as one hang. */
-.station-inner {
-  grid-column: 2;
-  display: grid;
-  grid-template-columns: var(--margin) minmax(0, 1fr) var(--margin);
-  gap: var(--s-7);
-  align-items: end;
+/* A hang, not a slideshow. Several works share the screen and their light pools
+ * overlap on the plaster behind them — which is the point: one painting per
+ * viewport left the room mostly empty, and an empty dark room is not restraint,
+ * it is nothing to look at. */
+#stations {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--s-8) var(--s-7);
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 132px var(--s-6) 26vh;
 }
 
+.station {
+  flex: 0 0 auto;
+  scroll-margin-top: 22vh;
+}
+.station-inner { display: block; }
+
 .canvas-hold {
-  grid-column: 2;
   position: relative;
-  justify-self: center;
-  transition: opacity var(--d-light) var(--e-out);
+  transition: opacity var(--d-light) var(--e-out), transform var(--d-move) var(--e-out);
 }
 /* Unlit works stay clearly present. Dimming the painting itself toward black is
  * the wrong instrument — it is the light that should fall off, not the work. */
-.station[data-lit="0"] .canvas-hold { opacity: 0.62; }
+.station[data-lit="0"] .canvas-hold { opacity: 0.5; }
 
 .canvas-frame {
   position: relative;
@@ -178,79 +174,56 @@
   transition: border-color var(--d-light) var(--e-out);
 }
 .station[data-lit="1"] .canvas-frame {
-  border-color: color-mix(in oklab, var(--c-glow) 20%, var(--c-line));
+  border-color: color-mix(in oklab, var(--c-glow) 22%, var(--c-line));
+  filter: drop-shadow(0 18px 44px color-mix(in oklab, var(--c-bloom) 70%, transparent));
 }
-/* The one permitted drop-shadow in the system: a lamp does cast one, and it is
- * tinted with the work's own bounce light. */
-.station[data-lit="1"] .canvas-frame {
-  filter: drop-shadow(0 24px 60px color-mix(in oklab, var(--c-bloom) 70%, transparent));
-}
+.canvas-frame:hover { border-color: var(--c-accent); }
+.canvas-frame:hover + .tag .tag-title { color: var(--c-ink); }
 
 .canvas-frame img {
   display: block;
-  max-height: var(--wall-max);
   width: auto;
   max-width: 100%;
   border-radius: var(--r-image);
 }
 
-/* The plate. Metadata never sits on the picture — that is what the margin is for. */
-.plate {
-  grid-column: 3;
-  align-self: end;
-  padding-bottom: var(--s-2);
-  border-top: 1px solid var(--c-line);
-  padding-top: var(--s-3);
-  transition: border-color var(--d-light) var(--e-out), opacity var(--d-light) var(--e-out);
-}
-.station[data-lit="0"] .plate { opacity: 0.55; }
-.plate-no {
-  color: var(--c-accent);
-  display: block;
-  margin-bottom: var(--s-3);
-  transition: color var(--d-light) var(--e-out);
-}
-.plate-title {
-  font: var(--t-work);
-  letter-spacing: var(--tr-work);
-  color: var(--c-ink);
-  margin: 0 0 var(--s-2);
-  transition: color var(--d-light) var(--e-out);
-}
-.plate-title .prov {
-  color: var(--n-iron);
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: var(--tr-meta);
-  vertical-align: 0.35em;
-  margin-left: var(--s-1);
-}
-.plate-rows { margin: var(--s-4) 0 0; display: grid; gap: var(--s-2); }
-.plate-row {
-  display: grid;
-  grid-template-columns: 62px 1fr;
-  gap: var(--s-2);
+/* A tombstone label, not a plate. The full plate lives in the study view now —
+ * five metadata rows beside every work is what made the wall unreadable. */
+.tag {
+  display: flex;
   align-items: baseline;
-}
-.plate-row dt { color: var(--n-iron); font: var(--t-micro); letter-spacing: var(--tr-micro); text-transform: uppercase; }
-.plate-row dd { margin: 0; color: var(--c-ink-faint); font: var(--t-meta); letter-spacing: var(--tr-meta); }
-
-.swatches { display: flex; gap: 2px; margin-top: var(--s-4); }
-.swatch {
+  gap: var(--s-2);
+  padding-top: var(--s-3);
   width: 100%;
-  height: 18px;
-  border-radius: 0;
-  border: 0;
-  cursor: pointer;
-  transition: transform var(--d-tap) var(--e-out);
+  overflow: hidden;
+  transition: opacity var(--d-light) var(--e-out);
 }
-.swatch:hover { transform: scaleY(1.5); }
-
-.stand-in-note {
-  margin-top: var(--s-4);
+.station[data-lit="0"] .tag { opacity: 0.55; }
+.tag-no {
+  color: var(--c-accent);
+  flex: 0 0 auto;
+  transition: color var(--d-light) var(--e-out);
+}
+.tag-title {
+  font: var(--t-small);
+  color: var(--c-ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* A flex item will not shrink below its content width unless told to, which
+   * is what let the title run under the RECON badge instead of ellipsing. */
+  min-width: 0;
+  flex: 0 1 auto;
+  transition: color var(--d-tap) var(--e-out);
+}
+.tag-title .prov { color: var(--n-iron); font-family: var(--f-mono); font-size: 9px;
+                   vertical-align: 0.4em; margin-left: 2px; }
+.tag-recon {
   color: var(--n-iron);
-  border-left: 1px solid var(--c-line);
-  padding-left: var(--s-2);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-control);
+  padding: 1px 4px;
+  flex: 0 0 auto;
 }
 
 /* --------------------------------------------------------- the hue rule --- */
@@ -331,6 +304,29 @@ table.ledger tbody tr:hover { background: color-mix(in oklab, var(--c-wash) 60%,
   border: 1px solid var(--c-line);
   border-radius: var(--r-control);
   padding: 2px 5px;
+}
+
+/* Shared by the study panel. These lived in the old hall block and are still
+ * used there, so they move rather than disappear. */
+.plate-no {
+  display: block;
+  color: var(--c-accent);
+  transition: color var(--d-light) var(--e-out);
+}
+.swatches { display: flex; gap: 2px; }
+.swatch {
+  width: 100%;
+  height: 18px;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  transition: transform var(--d-tap) var(--e-out);
+}
+.swatch:hover { transform: scaleY(1.5); }
+.stand-in-note {
+  color: var(--c-ink-faint);
+  border-left: 1px solid var(--c-line);
+  padding-left: var(--s-2);
 }
 
 /* -------------------------------------------------------------- study ----- */

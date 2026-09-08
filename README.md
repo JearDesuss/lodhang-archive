@@ -15,11 +15,17 @@ whichever work is currently lit. There is no brand colour and there must never b
 
 ## Put the artwork in
 
-**The images are not in this repository.** Eleven stand-ins ship in
-`assets/placeholder/`, at the correct aspect ratios and palettes, so the site can be
-developed and reviewed without them. Every work still missing its file says so, on
-its own plate — an archive that quietly shows a placeholder as the work is worthless
-as an archive.
+**The images are not in this repository.** Until they are, every work **paints
+itself**: `assets/js/reconstruct.js` builds a collage-painting for each entry out of
+what the catalogue actually knows — its palette, its aspect and its motifs. `beast`
+puts an animal-headed figure in it, `bird` opens a pair of wings, `glitch` cuts
+datamosh across it, `old-master` sinks a framed panel into it, `barrier` runs safety
+tape over the front.
+
+These are reconstructions, not reproductions, and the interface never pretends
+otherwise — every one is labelled `RECON` on the wall and `RECONSTRUCTION. PAINTED
+FROM THIS CATALOGUE ENTRY. NOT THE WORK.` on its plate. The moment a real file lands
+in `works/` it replaces the reconstruction entirely.
 
 There are two ways to fill it, and neither needs you to rename anything.
 
@@ -96,9 +102,9 @@ mixing two saturated colours does not pass through grey.
 | `assets/js/import.js` | Browser-side ingest. Same palette maths and the same matching DP as `ingest.py`, so both agree. |
 | `DESIGN.md` | The contract. Tokens, elevation philosophy, and seven don'ts with their reasons. |
 
-**Views.** *Hall* — a vertical descent, every work at constant area so the 1.68
-panorama and the 0.71 stele are equal-weight objects against one dead-straight plumb
-rule. *Study* — deep zoom with momentum, cursor-anchored, plus the annotated
+**Views.** *Hall* — a salon hang, the whole archive on one wall with several works
+lit at once and their light pools mixing on the plaster. Every work is sized to
+constant area, so the 1.68 panorama and the 0.71 stele are equal-weight objects. *Study* — deep zoom with momentum, cursor-anchored, plus the annotated
 fragments. *Index* — a real sortable table, by plate, hue or format. *Collation* —
 hold **C** for all eleven plates at true relative scale, set like lines of type.
 
