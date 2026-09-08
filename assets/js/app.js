@@ -124,7 +124,11 @@ function renderHall() {
  * the composition the hall is actually built on.
  */
 function sizeStations() {
-  const A = 0.28 * innerWidth * innerHeight
+  // On a narrow screen the plate sits under the work rather than beside it, so
+  // the work can take a much larger share of the viewport — at the desktop
+  // constant it renders postage-stamp sized with the margin it no longer needs.
+  const narrow = innerWidth < 860
+  const A = (narrow ? 0.46 : 0.28) * innerWidth * innerHeight
   for (const st of $$('.station')) {
     const work = state.works.find((w) => w.slug === st.dataset.slug)
     const img = $('img', st)
@@ -133,8 +137,8 @@ function sizeStations() {
     let w = Math.sqrt(A * ar)
     let h = Math.sqrt(A / ar)
     // Clamps so a very wide or very tall work cannot run off the viewport.
-    const maxH = innerHeight * 0.78
-    const maxW = innerWidth * 0.62
+    const maxH = innerHeight * (narrow ? 0.62 : 0.78)
+    const maxW = innerWidth * (narrow ? 0.88 : 0.62)
     const k = Math.min(1, maxH / h, maxW / w)
     w *= k
     h *= k

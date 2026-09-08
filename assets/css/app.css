@@ -527,8 +527,27 @@ kbd {
 
 @media (max-width: 860px) {
   :root { --wall-max: 62vh; --s-9: 72px; }
+
+  /* Chrome and colophon stop being fixed. On a narrow screen the header wraps to
+   * two rows and the colophon to three, and between them they were sitting on
+   * top of the work and its plate. Letting both scroll with the document removes
+   * the overlap entirely rather than fighting it with padding. */
+  #chrome, #colophon { position: static; transform: none; }
+  #chrome::before, #colophon::before { display: none; }
+  #colophon { flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+  #plumb { display: none; }
+
+  .station { min-height: auto; padding: var(--s-7) var(--s-4); }
   .station-inner { grid-template-columns: 1fr; gap: var(--s-5); }
+  /* The explicit column placement has to be reset too. Left at 2 and 3 against a
+   * single-column grid the browser invents implicit columns and the work and its
+   * plate stay side by side — which is exactly what mobile was doing. */
+  .canvas-hold, .plate { grid-column: 1; justify-self: stretch; }
+  .canvas-frame { display: inline-block; }
   .plate { border-top: 1px solid var(--c-line); }
+  /* Fixed dark neutrals disappear once a work lights the wall behind them. */
+  .plate-row dt, .stand-in-note { color: var(--c-ink-faint); }
+  .plate-row { grid-template-columns: 74px 1fr; }
   #chrome { grid-template-columns: 1fr auto; row-gap: var(--s-3); padding: var(--s-4); }
   .chrome-r { grid-column: 1 / -1; justify-content: flex-start; }
   #keys { display: none; }
