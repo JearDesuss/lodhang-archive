@@ -94,6 +94,12 @@ const run = async () => {
       else if (verb === 'up') await page.keyboard.up(arg)
       else if (verb === 'wait') await page.waitForTimeout(Number(arg))
       else if (verb === 'wheel') await page.mouse.wheel(0, Number(arg))
+      // Real pointer movement, for anything driven by mousemove rather than by
+      // a click — `hover` only lands on an element's centre.
+      else if (verb === 'mouse') {
+        const [mx, my] = arg.split(/[, ]+/).map(Number)
+        await page.mouse.move(mx, my)
+      }
       else if (verb === 'eval') await page.evaluate(arg)
       else problems.push('unknown step verb: ' + verb)
     } catch (e) {

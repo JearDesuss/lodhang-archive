@@ -560,3 +560,38 @@ kbd {
   * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
   .swatch:hover, #huerule .tick:hover, .hotspot:hover { transform: none; }
 }
+
+/* ------------------------------------------------------------- the instrument */
+/* Hold E: the room re-lights from the pixel under the cursor. */
+body.is-sampling { cursor: crosshair; }
+body.is-sampling .canvas-frame { cursor: crosshair; }
+
+#sampler-readout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: color-mix(in oklab, var(--n-void) 86%, transparent);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-control);
+  color: var(--c-ink);
+  font: var(--t-meta);
+  letter-spacing: var(--tr-meta);
+  font-feature-settings: 'zero', 'tnum';
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--d-tap) var(--e-out);
+}
+#sampler-readout.is-on { opacity: 1; }
+#sampler-readout .swatch-chip {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--c-line);
+  flex: 0 0 auto;
+}
+#sampler-readout .sampler-oklch { color: var(--c-ink-faint); }

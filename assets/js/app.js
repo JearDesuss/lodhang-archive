@@ -13,6 +13,7 @@ import { applyTheme, registerThemeProperties, theme, hexToOklch } from './color.
 import { load, order, ORDERS, hueOf, dbPut, dbClear } from './store.js'
 import { Wall } from './wall.js'
 import { mountImport } from './import.js'
+import { mountSampler } from './sampler.js'
 
 const $ = (sel, root = document) => root.querySelector(sel)
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
@@ -149,21 +150,19 @@ function sizeStations() {
 }
 
 /**
- * Decide which work is lit, publish its theme, and hand the wall the light
- * sources. Called on scroll — everything visual in the hall follows from here.
+ * Where the light is coming from right now: one entry per work on screen, with
+ * its rect and how strongly it is lit. Shared by the scroll handler and by the
+ * sampler, which reuses the same geometry and only swaps the colour.
  */
-function updateLighting() {
-  if (state.view !== 'hall') return
-  const stations = $$('.station')
-  if (!stations.length) return
-
+function collectLights({ markLit = false } = {}) {
   const mid = innerHeight / 2
   const lights = []
   let best = null
   let bestDist = Infinity
 
-  for (const st of stations) {
+  for (const st of $$('.station')) {
     const frame = $('.canvas-frame', st)
+    if (!frame) continue
     const r = frame.getBoundingClientRect()
     const centre = r.top + r.height / 2
     const dist = Math.abs(centre - mid)
@@ -182,9 +181,24 @@ function updateLighting() {
       })
     }
     if (dist < bestDist) { bestDist = dist; best = { st, work } }
-    st.dataset.lit = intensity > 0.55 ? '1' : '0'
+    if (markLit) st.dataset.lit = intensity > 0.55 ? '1' : '0'
   }
+  return { lights, best }
+}
 
+/**
+ * Decide which work is lit, publish its theme, and hand the wall the light
+ * sources. Called on scroll — everything visual in the hall follows from here.
+ */
+function updateLighting() {
+  if (state.view !== 'hall') return
+  // While the instrument is held the room belongs to the cursor, not to the
+  // nearest work — otherwise a scroll mid-sample snaps the light back.
+  if (state.sampler?.isActive()) return
+  const stations = $$('.station')
+  if (!stations.length) return
+
+  const { lights, best } = collectLights({ markLit: true })
   state.wall?.setLights(lights)
 
   if (best && best.work.index !== state.lit) {
@@ -641,6 +655,21 @@ async function boot() {
     dbPut,
     dbClear,
     status,
+  })
+
+  // Hold E: re-light the room from the pixel under the cursor.
+  state.sampler = mountSampler({
+    getWorks: () => state.works,
+    getLitTheme: () => state.works[state.lit]?.theme,
+    // Re-light the wall itself from the sampled colour. Every work on screen
+    // keeps its own rect and intensity so the light still comes from where the
+    // paintings are; only the colour is replaced.
+    onSample: (t) => {
+      const lights = collectLights().lights.map((L) => ({ ...L, color: t.glow }))
+      state.wall?.setLights(lights)
+    },
+    onRestore: () => updateLighting(),
+    onStatus: status,
   })
 
   for (const b of $$('.viewbtn')) b.addEventListener('click', () => showView(b.dataset.view))
